@@ -15,70 +15,49 @@
     </div>
 
     <div class="container mx-auto px-6 py-20">
-        <div class="flex flex-wrap justify-center gap-4 mb-16">
-            <button class="bg-orange-500 text-white px-6 py-2 rounded-full font-bold shadow-lg shadow-orange-100">すべて</button>
-            <button class="bg-white text-slate-600 px-6 py-2 rounded-full font-bold border border-slate-100 hover:bg-orange-50 transition">フード</button>
-            <button class="bg-white text-slate-600 px-6 py-2 rounded-full font-bold border border-slate-100 hover:bg-orange-50 transition">おもちゃ</button>
-            <button class="bg-white text-slate-600 px-6 py-2 rounded-full font-bold border border-slate-100 hover:bg-orange-50 transition">アクセサリー</button>
-        </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-12">
-            
-            <div class="group">
-                <div class="relative bg-white rounded-[40px] aspect-square mb-6 overflow-hidden border border-slate-100 shadow-sm transition-all group-hover:shadow-2xl group-hover:-translate-y-2">
-                    <div class="absolute inset-0 bg-slate-100 flex items-center justify-center text-slate-400 font-bold text-xl group-hover:bg-orange-50 transition-colors">
-                        COMING SOON
-                    </div>
-                    <div class="absolute top-6 left-6">
-                        <span class="bg-white/90 backdrop-blur text-orange-600 text-[10px] font-black px-3 py-1 rounded-full shadow-sm">PREMIUM</span>
-                    </div>
-                </div>
-                <div class="px-4">
-                    <h3 class="text-xl font-bold text-slate-900 mb-2 group-hover:text-orange-500 transition-colors">無添加・国産鹿肉ジャーキー</h3>
-                    <p class="text-slate-400 text-sm mb-4 italic">素材本来の旨味を凝縮した健康おやつ</p>
-                    <div class="flex items-center justify-between">
-                        <span class="text-2xl font-black text-slate-900">¥1,200 <span class="text-sm font-medium text-slate-400">(税込)</span></span>
-                        <button class="w-10 h-10 bg-slate-900 text-white rounded-full flex items-center justify-center hover:bg-orange-500 transition-colors shadow-lg">＋</button>
-                    </div>
-                </div>
+        @if($items->isEmpty())
+            <div class="text-center py-24 text-slate-400">
+                <div class="text-5xl mb-6">🐾</div>
+                <p class="font-bold text-xl">現在、商品は準備中です。</p>
+                <p class="text-sm mt-2">もうしばらくお待ちください。</p>
             </div>
-
-            <div class="group">
-                <div class="relative bg-white rounded-[40px] aspect-square mb-6 overflow-hidden border border-slate-100 shadow-sm transition-all group-hover:shadow-2xl group-hover:-translate-y-2">
-                    <div class="absolute inset-0 bg-slate-100 flex items-center justify-center text-slate-400 font-bold text-xl group-hover:bg-orange-50 transition-colors">
-                        COMING SOON
+        @else
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-12">
+                @foreach($items as $item)
+                    <div class="group">
+                        <div class="relative bg-white rounded-[40px] aspect-square mb-6 overflow-hidden border border-slate-100 shadow-sm transition-all group-hover:shadow-2xl group-hover:-translate-y-2">
+                            @if($item->thumbnail_image)
+                                <img
+                                    src="{{ asset('storage/' . $item->thumbnail_image) }}"
+                                    alt="{{ $item->name }}"
+                                    class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                >
+                            @else
+                                <div class="absolute inset-0 bg-slate-100 flex items-center justify-center text-slate-400 font-bold text-xl group-hover:bg-orange-50 transition-colors">
+                                    🐶
+                                </div>
+                            @endif
+                        </div>
+                        <div class="px-4">
+                            <h3 class="text-xl font-bold text-slate-900 mb-2 group-hover:text-orange-500 transition-colors">
+                                {{ $item->name }}
+                            </h3>
+                            @if($item->description)
+                                <p class="text-slate-400 text-sm mb-4 italic line-clamp-2">{{ $item->description }}</p>
+                            @endif
+                            <div class="flex items-center justify-between">
+                                <span class="text-2xl font-black text-slate-900">
+                                    ¥{{ number_format($item->price) }}
+                                    <span class="text-sm font-medium text-slate-400">(税込)</span>
+                                </span>
+                                <button class="w-10 h-10 bg-slate-900 text-white rounded-full flex items-center justify-center hover:bg-orange-500 transition-colors shadow-lg">＋</button>
+                            </div>
+                        </div>
                     </div>
-                    <div class="absolute top-6 left-6">
-                        <span class="bg-slate-900/90 backdrop-blur text-white text-[10px] font-black px-3 py-1 rounded-full shadow-sm">HANDMADE</span>
-                    </div>
-                </div>
-                <div class="px-4">
-                    <h3 class="text-xl font-bold text-slate-900 mb-2 group-hover:text-orange-500 transition-colors">本革イタリアンレザー・リード</h3>
-                    <p class="text-slate-400 text-sm mb-4 italic">使うほどに馴染む、一生モノの品質</p>
-                    <div class="flex items-center justify-between">
-                        <span class="text-2xl font-black text-slate-900">¥5,800 <span class="text-sm font-medium text-slate-400">(税込)</span></span>
-                        <button class="w-10 h-10 bg-slate-900 text-white rounded-full flex items-center justify-center hover:bg-orange-500 transition-colors shadow-lg">＋</button>
-                    </div>
-                </div>
+                @endforeach
             </div>
-
-            <div class="group">
-                <div class="relative bg-white rounded-[40px] aspect-square mb-6 overflow-hidden border border-slate-100 shadow-sm transition-all group-hover:shadow-2xl group-hover:-translate-y-2">
-                    <div class="absolute inset-0 bg-slate-100 flex items-center justify-center text-slate-400 font-bold text-xl group-hover:bg-orange-50 transition-colors">
-                        COMING SOON
-                    </div>
-                </div>
-                <div class="px-4">
-                    <h3 class="text-xl font-bold text-slate-900 mb-2 group-hover:text-orange-500 transition-colors">オーガニックコットン・ベッド</h3>
-                    <p class="text-slate-400 text-sm mb-4 italic">最高の眠りを提供する、洗える贅沢ベッド</p>
-                    <div class="flex items-center justify-between">
-                        <span class="text-2xl font-black text-slate-900">¥8,900 <span class="text-sm font-medium text-slate-400">(税込)</span></span>
-                        <button class="w-10 h-10 bg-slate-900 text-white rounded-full flex items-center justify-center hover:bg-orange-500 transition-colors shadow-lg">＋</button>
-                    </div>
-                </div>
-            </div>
-
-        </div>
+        @endif
     </div>
 
     <div class="container mx-auto px-6 py-10">

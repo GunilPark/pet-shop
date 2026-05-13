@@ -16,53 +16,62 @@
 
     <div class="container mx-auto px-6 py-20">
         <div class="max-w-4xl mx-auto">
-            
-            <div class="flex flex-col md:flex-row bg-white rounded-[40px] shadow-sm border border-slate-100 overflow-hidden mb-12 hover:shadow-xl transition-all group">
-                <div class="md:w-1/4 bg-slate-900 text-white flex flex-col items-center justify-center py-10 group-hover:bg-orange-500 transition-colors">
-                    <span class="text-sm font-bold opacity-70 mb-1">2026.03</span>
-                    <span class="text-5xl font-black mb-1">15</span>
-                    <span class="text-sm font-bold bg-white/20 px-3 py-1 rounded-full text-white uppercase">Sun</span>
-                </div>
-                <div class="md:w-3/4 p-10 flex flex-col justify-between">
-                    <div>
-                        <div class="flex items-center gap-3 mb-4">
-                            <span class="bg-orange-100 text-orange-600 text-xs font-bold px-3 py-1 rounded-full">予約受付中</span>
-                            <span class="text-slate-400 text-sm flex items-center gap-1">📍 代々木公園 特設会場</span>
-                        </div>
-                        <h3 class="text-2xl font-bold text-slate-900 mb-4 group-hover:text-orange-500 transition-colors">春のワンちゃん大運動会 2026</h3>
-                        <p class="text-slate-500 text-sm leading-relaxed mb-6 italic">
-                            毎年大人気の運動会！かけっこや障害物競走など、初心者でも楽しめる種目が盛りだくさんです。参加者全員にオリジナルおやつをプレゼント！
-                        </p>
-                    </div>
-                    <div class="flex items-center justify-between mt-4 border-t border-slate-50 pt-6">
-                        <div class="text-sm">
-                            <span class="text-slate-400">定員:</span> <span class="font-bold text-slate-800">30組</span> 
-                            <span class="mx-2 text-slate-200">|</span>
-                            <span class="text-slate-400">参加費:</span> <span class="font-bold text-orange-500">¥2,500</span>
-                        </div>
-                        <button class="bg-slate-900 text-white px-6 py-2 rounded-xl font-bold text-sm hover:bg-orange-500 transition-colors shadow-lg shadow-slate-200">予約ページへ進む</button>
-                    </div>
-                </div>
-            </div>
 
-            <div class="flex flex-col md:flex-row bg-white rounded-[40px] shadow-sm border border-slate-100 overflow-hidden mb-12 opacity-80 group">
-                <div class="md:w-1/4 bg-slate-200 text-slate-500 flex flex-col items-center justify-center py-10">
-                    <span class="text-sm font-bold opacity-70 mb-1">2026.04</span>
-                    <span class="text-5xl font-black mb-1">05</span>
-                    <span class="text-sm font-bold border border-slate-300 px-3 py-1 rounded-full uppercase">Sun</span>
+            @if($events->isEmpty())
+                <div class="text-center py-24 text-slate-400">
+                    <div class="text-5xl mb-6">📅</div>
+                    <p class="font-bold text-xl">現在、開催予定のイベントはありません。</p>
+                    <p class="text-sm mt-2">次回のイベントをお楽しみに！</p>
                 </div>
-                <div class="md:w-3/4 p-10">
-                    <div class="flex items-center gap-3 mb-4">
-                        <span class="bg-slate-100 text-slate-500 text-xs font-bold px-3 py-1 rounded-full">準備中</span>
-                        <span class="text-slate-400 text-sm flex items-center gap-1">📍 駒沢オリンピック公園</span>
+            @else
+                @foreach($events as $event)
+                    <div class="flex flex-col md:flex-row bg-white rounded-[40px] shadow-sm border border-slate-100 overflow-hidden mb-12 hover:shadow-xl transition-all group">
+                        <div class="md:w-1/4 bg-slate-900 text-white flex flex-col items-center justify-center py-10 group-hover:bg-orange-500 transition-colors">
+                            <span class="text-sm font-bold opacity-70 mb-1">{{ $event->started_at->format('Y.m') }}</span>
+                            <span class="text-5xl font-black mb-1">{{ $event->started_at->format('d') }}</span>
+                            <span class="text-sm font-bold bg-white/20 px-3 py-1 rounded-full text-white uppercase">
+                                {{ $event->started_at->isoFormat('ddd') }}
+                            </span>
+                        </div>
+                        <div class="md:w-3/4 p-10 flex flex-col justify-between">
+                            <div>
+                                <div class="flex items-center gap-3 mb-4">
+                                    <span class="bg-orange-100 text-orange-600 text-xs font-bold px-3 py-1 rounded-full">予約受付中</span>
+                                    @if($event->location)
+                                        <span class="text-slate-400 text-sm flex items-center gap-1">
+                                            📍 {{ $event->location }}
+                                        </span>
+                                    @endif
+                                </div>
+                                <h3 class="text-2xl font-bold text-slate-900 mb-4 group-hover:text-orange-500 transition-colors">
+                                    {{ $event->title }}
+                                </h3>
+                                @if($event->description)
+                                    <p class="text-slate-500 text-sm leading-relaxed mb-6 italic">
+                                        {{ $event->description }}
+                                    </p>
+                                @endif
+                            </div>
+                            <div class="flex items-center justify-between mt-4 border-t border-slate-50 pt-6">
+                                <div class="text-sm">
+                                    @if($event->max_capacity)
+                                        <span class="text-slate-400">定員:</span>
+                                        <span class="font-bold text-slate-800">{{ $event->max_capacity }}組</span>
+                                        <span class="mx-2 text-slate-200">|</span>
+                                    @endif
+                                    <span class="text-slate-400">開催時間:</span>
+                                    <span class="font-bold text-slate-800">
+                                        {{ $event->started_at->format('H:i') }} 〜 {{ $event->ended_at->format('H:i') }}
+                                    </span>
+                                </div>
+                                <button class="bg-slate-900 text-white px-6 py-2 rounded-xl font-bold text-sm hover:bg-orange-500 transition-colors shadow-lg shadow-slate-200">
+                                    予約ページへ進む
+                                </button>
+                            </div>
+                        </div>
                     </div>
-                    <h3 class="text-2xl font-bold text-slate-400 mb-4">パピー交流会 ＆ マナー講習</h3>
-                    <p class="text-slate-400 text-sm leading-relaxed mb-6 italic">
-                        生後12ヶ月以内のパピー限定！他のワンちゃんとの接し方や、外出時のマナーをプロのトレーナーが優しくレクチャーします。
-                    </p>
-                    <div class="text-sm text-slate-400 font-bold">※ 詳細は3月中旬に公開予定です。</div>
-                </div>
-            </div>
+                @endforeach
+            @endif
 
         </div>
     </div>
