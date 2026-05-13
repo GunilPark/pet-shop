@@ -16,6 +16,7 @@ class DogGoodsEventResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-calendar';
     protected static ?string $navigationGroup = 'イベント管理';
     protected static ?string $modelLabel = 'イベント';
+    protected static ?string $pluralModelLabel = 'イベント一覧';
     protected static ?int $navigationSort = 1;
 
     public static function form(Form $form): Form

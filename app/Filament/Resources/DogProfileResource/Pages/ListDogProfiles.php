@@ -1,7 +1,19 @@
 <?php
+
 namespace App\Filament\Resources\DogProfileResource\Pages;
+
 use App\Filament\Resources\DogProfileResource;
+use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
-class ListDogProfiles extends ListRecords {
+
+class ListDogProfiles extends ListRecords
+{
     protected static string $resource = DogProfileResource::class;
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            Actions\CreateAction::make()->label('犬プロフィールを登録'),
+        ];
+    }
 }

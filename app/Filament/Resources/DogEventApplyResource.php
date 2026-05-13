@@ -17,6 +17,7 @@ class DogEventApplyResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-check';
     protected static ?string $navigationGroup = 'イベント管理';
     protected static ?string $modelLabel = 'イベント申請';
+    protected static ?string $pluralModelLabel = 'イベント申請一覧';
     protected static ?int $navigationSort = 2;
 
     public static function form(Form $form): Form

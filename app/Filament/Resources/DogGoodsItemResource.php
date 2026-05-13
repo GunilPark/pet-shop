@@ -16,6 +16,7 @@ class DogGoodsItemResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-tag';
     protected static ?string $navigationGroup = 'グッズ管理';
     protected static ?string $modelLabel = 'グッズ商品';
+    protected static ?string $pluralModelLabel = 'グッズ商品一覧';
     protected static ?int $navigationSort = 2;
 
     public static function form(Form $form): Form

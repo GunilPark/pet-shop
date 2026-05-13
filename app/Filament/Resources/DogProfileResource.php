@@ -17,6 +17,7 @@ class DogProfileResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-heart';
     protected static ?string $navigationGroup = 'ユーザー管理';
     protected static ?string $modelLabel = '犬プロフィール';
+    protected static ?string $pluralModelLabel = '犬プロフィール一覧';
     protected static ?int $navigationSort = 2;
 
     public static function form(Form $form): Form

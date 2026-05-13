@@ -18,6 +18,7 @@ class DogGoodsOrderResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-shopping-bag';
     protected static ?string $navigationGroup = 'グッズ管理';
     protected static ?string $modelLabel = 'グッズ注文';
+    protected static ?string $pluralModelLabel = 'グッズ注文一覧';
     protected static ?int $navigationSort = 1;
 
     public static function form(Form $form): Form
