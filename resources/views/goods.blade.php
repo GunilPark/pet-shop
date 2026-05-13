@@ -51,7 +51,13 @@
                                     ¥{{ number_format($item->price) }}
                                     <span class="text-sm font-medium text-slate-400">(税込)</span>
                                 </span>
-                                <button class="w-10 h-10 bg-slate-900 text-white rounded-full flex items-center justify-center hover:bg-orange-500 transition-colors shadow-lg">＋</button>
+                                @auth
+                                    <a href="{{ route('goods.order.create', $item) }}"
+                                       class="w-10 h-10 bg-slate-900 text-white rounded-full flex items-center justify-center hover:bg-orange-500 transition-colors shadow-lg">＋</a>
+                                @else
+                                    <a href="{{ route('login') }}"
+                                       class="w-10 h-10 bg-slate-900 text-white rounded-full flex items-center justify-center hover:bg-orange-500 transition-colors shadow-lg">＋</a>
+                                @endauth
                             </div>
                         </div>
                     </div>
