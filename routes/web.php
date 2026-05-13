@@ -13,6 +13,17 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+// TOPページ
 Route::get('/', function () {
     return view('welcome');
+});
+
+// 犬RUNイベントページ
+Route::get('/event', function () {
+    return view('event');
+});
+
+// 犬グッズページ
+Route::get('/goods', function () {
+    return view('goods');
 });
