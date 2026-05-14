@@ -8,7 +8,8 @@ use App\Enums\ProductType;
 use App\Models\DogGoodsItem;
 use App\Models\DogGoodsOrder;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Mail;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 
 class GoodsOrderController extends Controller
 {
@@ -18,12 +19,9 @@ class GoodsOrderController extends Controller
     {
         abort_if(! $item->is_active, 404);
 
-        $dogProfiles = auth()->user()->dogProfiles()->where('is_active', true)->get();
-
         return match($item->product_type) {
-            ProductType::NosePrint  => view('goods.order-nose-print', compact('item')),
-            ProductType::Silhouette => view('goods.order-silhouette', compact('item', 'dogProfiles')),
-            default                 => view('goods.order-basic', compact('item')),
+            ProductType::NameTag => view('goods.order-name-tag', compact('item')),
+            default              => view('goods.order-basic', compact('item')),
         };
     }
 
@@ -34,24 +32,21 @@ class GoodsOrderController extends Controller
         abort_if(! $item->is_active, 404);
 
         $data = match($item->product_type) {
-            ProductType::NosePrint  => $this->validateNosePrint($request),
-            ProductType::Silhouette => $this->validateSilhouette($request, $item),
-            default                 => $this->validateBasic($request),
+            ProductType::NameTag => $this->validateNameTag($request),
+            default              => $this->validateBasic($request),
         };
 
-        // 画像をセッション用に一時保存
+        // 画像をアップロード＋エングレービング風に加工
         if ($request->hasFile('uploaded_image')) {
-            $path = $request->file('uploaded_image')->store('orders/temp', 'public');
-            $data['temp_image'] = $path;
+            $data['temp_image'] = $this->processAndStore($request->file('uploaded_image'));
         }
+
+        // UploadedFile オブジェクトはセッションに入れない
+        unset($data['uploaded_image']);
 
         $request->session()->put('order_preview', $data);
 
-        $dogProfile = isset($data['dog_profile_id'])
-            ? auth()->user()->dogProfiles()->find($data['dog_profile_id'])
-            : null;
-
-        return view('goods.order-preview', compact('item', 'data', 'dogProfile'));
+        return view('goods.order-preview', compact('item', 'data'));
     }
 
     // ---- 注文確定 or 相談申請 ----
@@ -68,13 +63,13 @@ class GoodsOrderController extends Controller
         $uploadedImage = $data['temp_image'] ?? null;
         if ($uploadedImage) {
             $final = str_replace('orders/temp/', 'orders/uploaded/', $uploadedImage);
-            \Illuminate\Support\Facades\Storage::disk('public')->move($uploadedImage, $final);
+            Storage::disk('public')->move($uploadedImage, $final);
             $uploadedImage = $final;
         }
 
         $order = DogGoodsOrder::create([
             'user_id'           => auth()->id(),
-            'dog_profile_id'    => $data['dog_profile_id'] ?? null,
+            'dog_profile_id'    => null,
             'item_id'           => $item->id,
             'order_status'      => OrderStatus::Pending,
             'processing_status' => ProcessingStatus::Pending,
@@ -101,33 +96,65 @@ class GoodsOrderController extends Controller
         ]);
     }
 
-    private function validateNosePrint(Request $request): array
+    private function validateNameTag(Request $request): array
     {
         return $request->validate([
-            'tag_shape'      => ['required', 'in:straight,round'],
+            'material'       => ['required', 'in:black,wood'],
+            'engraving_type' => ['required', 'in:nose_print,silhouette'],
             'uploaded_image' => ['required', 'image', 'max:10240'],
-            'back_name'      => ['required', 'string', 'max:50'],
-            'back_breed'     => ['nullable', 'string', 'max:50'],
-            'back_birthday'  => ['nullable', 'string', 'max:20'],
-            'back_message'   => ['nullable', 'string', 'max:100'],
+            'name'           => ['required', 'string', 'max:50'],
+            'breed'          => ['nullable', 'string', 'max:50'],
+            'birthday'       => ['nullable', 'string', 'max:20'],
+            'message'        => ['nullable', 'string', 'max:100'],
         ]);
     }
 
-    private function validateSilhouette(Request $request, DogGoodsItem $item): array
+    // ---- 画像処理：エングレービング風に変換 ----
+
+    private function processAndStore(UploadedFile $file): string
     {
-        $data = $request->validate([
-            'dog_profile_id'   => ['required', 'exists:dog_profiles,id'],
-            'use_profile_image'=> ['required', 'in:yes,no'],
-            'uploaded_image'   => ['nullable', 'required_if:use_profile_image,no', 'image', 'max:10240'],
-            'use_profile_text' => ['required', 'in:yes,no'],
-            'custom_name'      => ['nullable', 'required_if:use_profile_text,no', 'string', 'max:50'],
-            'custom_breed'     => ['nullable', 'string', 'max:50'],
-            'custom_birthday'  => ['nullable', 'string', 'max:20'],
-            'logo_text'        => ['nullable', 'string', 'max:30'],
-        ]);
+        $mime = $file->getMimeType();
 
-        return $data;
+        $src = match(true) {
+            str_contains($mime, 'png')  => imagecreatefrompng($file->getRealPath()),
+            str_contains($mime, 'webp') => imagecreatefromwebp($file->getRealPath()),
+            default                     => imagecreatefromjpeg($file->getRealPath()),
+        };
+
+        if (! $src) {
+            // 加工失敗時はそのまま保存
+            return $file->store('orders/temp', 'public');
+        }
+
+        $w = imagesx($src);
+        $h = imagesy($src);
+
+        // グレースケール変換
+        imagefilter($src, IMG_FILTER_GRAYSCALE);
+
+        // コントラスト強調（-100〜100、マイナスほど強）
+        imagefilter($src, IMG_FILTER_CONTRAST, -60);
+
+        // 明度を少し上げる
+        imagefilter($src, IMG_FILTER_BRIGHTNESS, 15);
+
+        // スムーズ
+        imagefilter($src, IMG_FILTER_SMOOTH, 2);
+
+        $dir  = storage_path('app/public/orders/temp');
+        if (! is_dir($dir)) {
+            mkdir($dir, 0755, true);
+        }
+
+        $filename = uniqid('eng_') . '.jpg';
+        $fullPath = $dir . '/' . $filename;
+        imagejpeg($src, $fullPath, 90);
+        imagedestroy($src);
+
+        return 'orders/temp/' . $filename;
     }
+
+    // ---- メール送信 ----
 
     private function sendConsultationMail(DogGoodsOrder $order, DogGoodsItem $item): void
     {

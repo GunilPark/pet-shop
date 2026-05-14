@@ -4,131 +4,188 @@
 <div class="container mx-auto px-6 py-16 max-w-2xl">
 
     <h1 class="text-2xl font-black text-slate-900 mb-2">注文確認 / プレビュー</h1>
-    <p class="text-slate-400 text-sm mb-10">内容をご確認の上、「購入を確定する」または「メールで相談する」をお選びください。</p>
+    <p class="text-slate-400 text-sm mb-10">仕上がりイメージをご確認の上、「購入を確定する」または「メールで相談する」をお選びください。</p>
 
     {{-- 商品情報 --}}
-    <div class="bg-slate-50 rounded-[24px] p-5 mb-8 flex gap-4 items-center border border-slate-100">
+    <div class="bg-slate-50 rounded-[24px] p-5 mb-10 flex gap-4 items-center border border-slate-100">
         @if($item->thumbnail_image)
             <img src="{{ asset('storage/' . $item->thumbnail_image) }}" class="w-16 h-16 rounded-xl object-cover">
         @else
-            <div class="w-16 h-16 rounded-xl bg-slate-200 flex items-center justify-center text-2xl">🐾</div>
+            <div class="w-16 h-16 rounded-xl bg-slate-200 flex items-center justify-center text-2xl">🏷️</div>
         @endif
         <div>
-            <p class="text-xs text-slate-400 font-bold">{{ $item->product_type->getLabel() }}</p>
-            <h2 class="font-black text-slate-900">{{ $item->name }}</h2>
+            <span class="text-xs font-bold px-2 py-1 rounded-full bg-slate-200 text-slate-600">{{ $item->product_type->getLabel() }}</span>
+            <h2 class="font-black text-slate-900 mt-1">{{ $item->name }}</h2>
             <p class="text-orange-500 font-black">¥{{ number_format($item->price) }}</p>
         </div>
     </div>
 
-    {{-- プレビューエリア --}}
-    @if($item->product_type->value === 'nose_print')
+    {{-- ======== ネームタグ プレビュー ======== --}}
+    @if($item->product_type->value === 'name_tag')
+
+        @php
+            $material     = $data['material'] ?? 'black';
+            $engravingType = $data['engraving_type'] ?? 'nose_print';
+            $name         = strtoupper($data['name'] ?? '');
+            $breed        = $data['breed'] ?? '';
+            $birthday     = $data['birthday'] ?? '';
+            $message      = $data['message'] ?? '';
+            $imgUrl       = isset($data['temp_image']) ? asset('storage/' . $data['temp_image']) : null;
+            $isWood       = $material === 'wood';
+        @endphp
+
         <div class="mb-10">
-            <h3 class="text-sm font-bold text-slate-500 uppercase tracking-widest mb-4">タグ プレビュー</h3>
-            <div class="flex gap-8 justify-center flex-wrap">
+            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 text-center">— TAG PREVIEW —</h3>
+            <p class="text-center text-xs mb-6"
+               style="color: {{ $isWood ? '#92400e' : '#64748b' }}">
+                {{ $isWood ? '木製ウッドキーホルダー' : '黒メタル軍番タグ' }} ／
+                {{ $engravingType === 'nose_print' ? '鼻紋刻印' : 'シルエット刻印' }}
+            </p>
+
+            <div class="flex justify-center gap-12 flex-wrap">
 
                 {{-- 表面 --}}
                 <div class="text-center">
-                    <p class="text-xs text-slate-400 mb-3 font-bold">表面（鼻紋）</p>
-                    @if(isset($data['temp_image']))
-                        @if($data['tag_shape'] === 'round')
-                            <div class="w-40 h-40 rounded-full border-4 border-slate-800 bg-white shadow-xl flex items-center justify-center overflow-hidden mx-auto">
-                                <img src="{{ asset('storage/' . $data['temp_image']) }}" class="w-full h-full object-cover">
-                            </div>
-                        @else
-                            <div class="w-64 h-28 rounded-2xl border-4 border-slate-800 bg-white shadow-xl flex items-center justify-center overflow-hidden mx-auto">
-                                <img src="{{ asset('storage/' . $data['temp_image']) }}" class="w-full h-full object-cover">
-                            </div>
-                        @endif
+                    <p class="text-xs font-bold text-slate-400 mb-3">表 面</p>
+
+                    @if($isWood)
+                        {{-- 木製キーホルダー --}}
+                        <div class="mx-auto mb-1 w-7 h-7 rounded-full border-4 border-gray-400"
+                             style="box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);"></div>
+                        <div class="relative mx-auto shadow-2xl flex flex-col items-center justify-center overflow-hidden"
+                             style="width:100px; height:148px; border-radius:6px;
+                                    background-image:
+                                        repeating-linear-gradient(90deg, transparent, transparent 3px, rgba(150,100,50,0.08) 3px, rgba(150,100,50,0.08) 4px),
+                                        linear-gradient(160deg, #e8c9a0 0%, #d4a96a 40%, #c49a5a 70%, #b8874a 100%);">
+                            @if($imgUrl)
+                                <div class="w-full" style="height:90px; filter: grayscale(100%) contrast(160%) sepia(20%); opacity:0.85;">
+                                    <img src="{{ $imgUrl }}" class="w-full h-full object-cover object-top">
+                                </div>
+                            @else
+                                <div class="flex items-center justify-center text-3xl" style="height:90px; opacity:0.4;">🐕</div>
+                            @endif
+                            @if($name)
+                                <p class="font-black text-center tracking-widest"
+                                   style="font-size:12px; color:rgba(80,40,10,0.9); letter-spacing:3px; padding:4px 6px;">{{ $name }}</p>
+                            @endif
+                        </div>
+
                     @else
-                        <div class="{{ $data['tag_shape'] === 'round' ? 'w-40 h-40 rounded-full' : 'w-64 h-28 rounded-2xl' }} border-4 border-slate-800 bg-slate-100 flex items-center justify-center mx-auto text-3xl shadow-xl">
-                            🐽
+                        {{-- 黒メタル軍番タグ --}}
+                        <div class="relative mx-auto bg-gray-900 shadow-2xl flex flex-col items-center justify-center"
+                             style="width:120px; height:168px; border-radius:12px 12px 24px 24px;">
+                            <div class="absolute bg-white rounded-full border-2 border-gray-700"
+                                 style="width:10px; height:10px; top:8px; left:50%; transform:translateX(-50%);"></div>
+                            <div class="flex flex-col items-center justify-center w-full h-full px-3 pt-5 pb-3">
+                                @if($imgUrl)
+                                    <div class="w-full flex-1 overflow-hidden rounded-sm mb-1"
+                                         style="filter: grayscale(100%) contrast(200%) brightness(1.1);">
+                                        <img src="{{ $imgUrl }}" class="w-full h-full object-cover">
+                                    </div>
+                                @else
+                                    <div class="w-16 h-16 bg-gray-700 rounded-sm flex items-center justify-center text-3xl mb-1">
+                                        {{ $engravingType === 'nose_print' ? '🐽' : '🐕' }}
+                                    </div>
+                                @endif
+                                @if($name)
+                                    <p class="text-white font-black text-center tracking-widest uppercase"
+                                       style="font-size:11px; letter-spacing:2px;">{{ $name }}</p>
+                                @endif
+                            </div>
                         </div>
                     @endif
                 </div>
 
                 {{-- 裏面 --}}
                 <div class="text-center">
-                    <p class="text-xs text-slate-400 mb-3 font-bold">裏面（情報）</p>
-                    <div class="{{ $data['tag_shape'] === 'round' ? 'w-40 h-40 rounded-full' : 'w-64 h-28 rounded-2xl' }} border-4 border-slate-800 bg-slate-900 text-white flex flex-col items-center justify-center mx-auto shadow-xl p-4">
-                        <p class="font-black text-lg">{{ $data['back_name'] }}</p>
-                        @if(!empty($data['back_breed'])) <p class="text-xs opacity-70">{{ $data['back_breed'] }}</p> @endif
-                        @if(!empty($data['back_birthday'])) <p class="text-xs opacity-70">{{ $data['back_birthday'] }}</p> @endif
-                        @if(!empty($data['back_message'])) <p class="text-xs opacity-50 mt-1 italic">{{ $data['back_message'] }}</p> @endif
-                    </div>
-                </div>
-            </div>
-        </div>
+                    <p class="text-xs font-bold text-slate-400 mb-3">裏 面</p>
 
-    @elseif($item->product_type->value === 'silhouette')
-        <div class="mb-10">
-            <h3 class="text-sm font-bold text-slate-500 uppercase tracking-widest mb-4">シルエット プレビュー</h3>
-
-            {{-- 商品に犬の輪郭が乗るイメージ --}}
-            <div class="relative bg-slate-100 rounded-[32px] overflow-hidden shadow-xl aspect-video flex items-center justify-center">
-                {{-- 商品背景（サムネイル） --}}
-                @if($item->thumbnail_image)
-                    <img src="{{ asset('storage/' . $item->thumbnail_image) }}" class="absolute inset-0 w-full h-full object-cover opacity-30">
-                @endif
-
-                {{-- シルエット表示 --}}
-                <div class="relative z-10 text-center">
-                    @php
-                        $useProfileImage = $data['use_profile_image'] ?? 'yes';
-                        $imgUrl = null;
-                        if ($useProfileImage === 'yes' && $dogProfile?->profile_image) {
-                            $imgUrl = asset('storage/' . $dogProfile->profile_image);
-                        } elseif (isset($data['temp_image'])) {
-                            $imgUrl = asset('storage/' . $data['temp_image']);
-                        }
-                        $useProfileText = $data['use_profile_text'] ?? 'yes';
-                        $displayName  = $useProfileText === 'yes' ? $dogProfile?->name : ($data['custom_name'] ?? '');
-                        $displayBreed = $useProfileText === 'yes' ? $dogProfile?->breed : ($data['custom_breed'] ?? '');
-                    @endphp
-
-                    @if($imgUrl)
-                        <div class="w-36 h-36 rounded-full overflow-hidden mx-auto shadow-2xl border-4 border-white"
-                             style="filter: contrast(200%) grayscale(100%);">
-                            <img src="{{ $imgUrl }}" class="w-full h-full object-cover">
+                    @if($isWood)
+                        <div class="mx-auto mb-1 w-7 h-7 rounded-full border-4 border-gray-400"
+                             style="box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);"></div>
+                        <div class="relative mx-auto shadow-2xl flex flex-col items-center justify-center gap-1"
+                             style="width:100px; height:148px; border-radius:6px;
+                                    background-image:
+                                        repeating-linear-gradient(90deg, transparent, transparent 3px, rgba(150,100,50,0.08) 3px, rgba(150,100,50,0.08) 4px),
+                                        linear-gradient(160deg, #e8c9a0 0%, #d4a96a 40%, #c49a5a 70%, #b8874a 100%);
+                                    padding: 12px 8px;">
+                            @if($name)
+                                <p class="font-black text-center" style="font-size:9px; color:rgba(60,30,5,0.9);">{{ $name }}</p>
+                                <div class="w-8 border-t border-amber-700 opacity-40 my-0.5"></div>
+                            @endif
+                            @if($breed)
+                                <p class="text-center" style="font-size:7px; color:rgba(80,40,10,0.75);">{{ $breed }}</p>
+                            @endif
+                            @if($birthday)
+                                <p class="text-center" style="font-size:7px; color:rgba(80,40,10,0.65);">{{ $birthday }}</p>
+                            @endif
+                            @if($message)
+                                <p class="text-center italic" style="font-size:6px; color:rgba(80,40,10,0.5); margin-top:3px;">{{ $message }}</p>
+                            @endif
                         </div>
+
                     @else
-                        <div class="w-36 h-36 rounded-full bg-slate-400 mx-auto flex items-center justify-center text-5xl shadow-2xl border-4 border-white">
-                            🐕
+                        <div class="relative mx-auto bg-gray-900 shadow-2xl flex flex-col items-center justify-center"
+                             style="width:120px; height:168px; border-radius:12px 12px 24px 24px;">
+                            <div class="absolute bg-white rounded-full border-2 border-gray-700"
+                                 style="width:10px; height:10px; top:8px; left:50%; transform:translateX(-50%);"></div>
+                            <div class="flex flex-col items-center justify-center w-full h-full px-3 pt-5 pb-3 gap-1">
+                                @if($name)
+                                    <p class="text-white font-black text-center" style="font-size:10px;">{{ $name }}</p>
+                                    <div class="w-8 border-t border-gray-600 my-0.5"></div>
+                                @endif
+                                @if($breed)
+                                    <p class="text-gray-300 text-center" style="font-size:8px;">{{ $breed }}</p>
+                                @endif
+                                @if($birthday)
+                                    <p class="text-gray-400 text-center" style="font-size:8px;">{{ $birthday }}</p>
+                                @endif
+                                @if($message)
+                                    <p class="text-gray-500 text-center italic" style="font-size:7px; margin-top:4px;">{{ $message }}</p>
+                                @endif
+                            </div>
                         </div>
                     @endif
-
-                    @if($displayName)
-                        <p class="font-black text-xl text-slate-900 mt-3 drop-shadow-lg">{{ $displayName }}</p>
-                    @endif
-                    @if($displayBreed)
-                        <p class="text-sm text-slate-600">{{ $displayBreed }}</p>
-                    @endif
-                    @if(!empty($data['logo_text']))
-                        <p class="text-xs text-orange-500 font-bold mt-1 tracking-widest uppercase">{{ $data['logo_text'] }}</p>
-                    @endif
-                </div>
-
-                <div class="absolute bottom-4 left-0 right-0 text-center">
-                    <p class="text-xs text-slate-400 bg-white/80 inline-block px-3 py-1 rounded-full">※ 実際の仕上がりイメージです。細部は加工後にご確認いただけます。</p>
                 </div>
             </div>
+
+            <p class="text-center text-xs text-slate-400 mt-4">※ 実際の刻印はレーザー加工により仕上がります。</p>
         </div>
 
+    {{-- ======== 基本商品 ======== --}}
     @else
-        {{-- 基本商品 --}}
-        <div class="bg-slate-50 rounded-2xl p-6 mb-10">
-            <p class="text-sm text-slate-600">数量: <span class="font-bold text-slate-900">{{ $data['quantity'] ?? 1 }}個</span></p>
+        <div class="bg-slate-50 rounded-2xl p-6 mb-10 text-sm">
+            <p class="text-slate-600">数量: <span class="font-bold text-slate-900 text-lg">{{ $data['quantity'] ?? 1 }}個</span></p>
         </div>
     @endif
 
-    {{-- 入力内容確認 --}}
-    <div class="bg-white rounded-[24px] border border-slate-100 shadow-sm p-8 mb-8">
-        <h3 class="font-bold text-slate-700 mb-4">入力内容の確認</h3>
+    {{-- 入力内容サマリー --}}
+    <div class="bg-white rounded-[24px] border border-slate-100 shadow-sm p-6 mb-8">
+        <h3 class="font-bold text-slate-700 text-sm mb-4">入力内容の確認</h3>
         <dl class="space-y-2 text-sm">
+            @php
+                $labels = [
+                    'material'       => '素材',
+                    'engraving_type' => '刻印タイプ',
+                    'name'           => '名前',
+                    'breed'          => '犬種',
+                    'birthday'       => '誕生日',
+                    'message'        => 'メッセージ',
+                    'quantity'       => '数量',
+                ];
+                $skip = ['temp_image'];
+                $displayValues = [
+                    'material'       => ['black' => '黒メタル（軍番タグ）', 'wood' => '木製（ウッドキーホルダー）'],
+                    'engraving_type' => ['nose_print' => '鼻紋', 'silhouette' => 'シルエット'],
+                ];
+            @endphp
             @foreach($data as $key => $val)
-                @if(!in_array($key, ['temp_image']) && !empty($val))
+                @if(!in_array($key, $skip) && is_string($val) && $val !== '')
                     <div class="flex gap-3">
-                        <dt class="text-slate-400 w-40 flex-shrink-0">{{ $key }}</dt>
-                        <dd class="text-slate-900 font-medium">{{ is_string($val) ? $val : '' }}</dd>
+                        <dt class="text-slate-400 w-36 flex-shrink-0">{{ $labels[$key] ?? $key }}</dt>
+                        <dd class="text-slate-900 font-medium">
+                            {{ $displayValues[$key][$val] ?? $val }}
+                        </dd>
                     </div>
                 @endif
             @endforeach
@@ -140,20 +197,21 @@
         @csrf
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <button type="submit" name="action" value="order"
-                class="bg-orange-500 text-white py-5 rounded-2xl font-bold text-lg hover:bg-orange-600 transition shadow-lg shadow-orange-100 text-center">
+                class="bg-orange-500 text-white py-5 rounded-2xl font-bold text-lg hover:bg-orange-600 transition shadow-lg shadow-orange-100">
                 ✅ 購入を確定する
             </button>
             <button type="submit" name="action" value="consult"
-                class="bg-slate-100 text-slate-700 py-5 rounded-2xl font-bold text-lg hover:bg-slate-200 transition text-center">
+                class="bg-slate-100 text-slate-700 py-5 rounded-2xl font-bold text-lg hover:bg-slate-200 transition">
                 📧 メールで相談する
             </button>
         </div>
-        <p class="text-xs text-slate-400 text-center mt-4">「メールで相談する」を選ぶと、担当者がご要望をうかがいます。</p>
+        <p class="text-xs text-slate-400 text-center mt-3">「メールで相談する」を選ぶと担当者がご要望をうかがいます（無料）</p>
     </form>
 
     <div class="mt-6 text-center">
-        <a href="{{ route('goods.order.create', $item) }}" class="text-slate-400 text-sm hover:text-orange-500 transition">← フォームに戻って修正する</a>
+        <a href="{{ route('goods.order.create', $item) }}" class="text-slate-400 text-sm hover:text-orange-500 transition">
+            ← フォームに戻って修正する
+        </a>
     </div>
-
 </div>
 @endsection

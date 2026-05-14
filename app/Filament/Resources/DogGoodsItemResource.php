@@ -37,9 +37,9 @@ class DogGoodsItemResource extends Resource
                     ->default(ProductType::Basic)
                     ->live()
                     ->helperText(fn (Get $get) => match ($get('product_type')) {
-                        'nose_print'  => '🐽 購入者が犬の鼻紋画像をアップロードして注文するタイプです。',
-                        'silhouette'  => '🐕 購入者が犬の写真をアップロードしてシルエット加工するタイプです。',
-                        default       => '📦 通常の商品です。',
+                        'name_tag'             => '🏷️ 素材（黒メタル/木製）と刻印タイプ（鼻紋/シルエット）を注文フォームで選択できる統合ネームタグ商品',
+                        'basic'                => '📦 通常の商品です。数量のみ選択して注文。',
+                        default                => '',
                     }),
 
                 Forms\Components\TextInput::make('price')
@@ -72,28 +72,21 @@ class DogGoodsItemResource extends Resource
                     ->columnSpanFull(),
             ]),
 
-            // 鼻紋商品専用セクション
-            Forms\Components\Section::make('🐽 鼻紋商品 — 注文フォーム案内文')
+            // ネームタグ共通撮影ガイド
+            Forms\Components\Section::make('📷 ネームタグ — 撮影ガイド文')
                 ->schema([
                     Forms\Components\Textarea::make('nose_print_guide')
-                        ->label('鼻紋撮影ガイド文（購入フォームに表示）')
+                        ->label('鼻紋撮影ガイド（注文フォームに表示）')
                         ->placeholder("例：鼻の正面から、しっかりピントを合わせて撮影してください。\nフラッシュなしで明るい場所での撮影を推奨します。")
-                        ->rows(4)
+                        ->rows(3)
                         ->columnSpanFull(),
-                ])
-                ->visible(fn (Get $get) => $get('product_type') === 'nose_print')
-                ->collapsible(),
-
-            // シルエット商品専用セクション
-            Forms\Components\Section::make('🐕 シルエット商品 — 注文フォーム案内文')
-                ->schema([
                     Forms\Components\Textarea::make('silhouette_guide')
-                        ->label('シルエット用写真ガイド文（購入フォームに表示）')
+                        ->label('シルエット撮影ガイド（注文フォームに表示）')
                         ->placeholder("例：横向きで全身が写るように撮影してください。\n背景はシンプルな方が仕上がりがきれいになります。")
-                        ->rows(4)
+                        ->rows(3)
                         ->columnSpanFull(),
                 ])
-                ->visible(fn (Get $get) => $get('product_type') === 'silhouette')
+                ->visible(fn (Get $get) => $get('product_type') === 'name_tag')
                 ->collapsible(),
         ]);
     }
