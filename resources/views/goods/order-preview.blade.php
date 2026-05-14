@@ -195,23 +195,29 @@
     {{-- アクションボタン --}}
     <form method="POST" action="{{ route('goods.order.store', $item) }}">
         @csrf
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        @if($item->product_type->value === 'name_tag')
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <button type="submit" name="action" value="order"
+                    class="bg-orange-500 text-white py-5 rounded-2xl font-bold text-lg hover:bg-orange-600 transition shadow-lg shadow-orange-100">
+                    ✅ 購入を確定する
+                </button>
+                <button type="submit" name="action" value="consult"
+                    class="bg-slate-100 text-slate-700 py-5 rounded-2xl font-bold text-lg hover:bg-slate-200 transition">
+                    📧 メールで相談する
+                </button>
+            </div>
+            <p class="text-xs text-slate-400 text-center mt-3">「メールで相談する」を選ぶと担当者がご要望をうかがいます（無料）</p>
+        @else
             <button type="submit" name="action" value="order"
-                class="bg-orange-500 text-white py-5 rounded-2xl font-bold text-lg hover:bg-orange-600 transition shadow-lg shadow-orange-100">
+                class="w-full bg-orange-500 text-white py-5 rounded-2xl font-bold text-lg hover:bg-orange-600 transition shadow-lg shadow-orange-100">
                 ✅ 購入を確定する
             </button>
-            <button type="submit" name="action" value="consult"
-                class="bg-slate-100 text-slate-700 py-5 rounded-2xl font-bold text-lg hover:bg-slate-200 transition">
-                📧 メールで相談する
-            </button>
-        </div>
-        <p class="text-xs text-slate-400 text-center mt-3">「メールで相談する」を選ぶと担当者がご要望をうかがいます（無料）</p>
+        @endif
     </form>
 
-    <div class="mt-6 text-center">
-        <a href="{{ route('goods.order.create', $item) }}" class="text-slate-400 text-sm hover:text-orange-500 transition">
-            ← フォームに戻って修正する
-        </a>
-    </div>
+    <a href="{{ route('goods.order.create', $item) }}"
+       class="mt-4 w-full block text-center bg-slate-100 text-slate-700 py-5 rounded-2xl font-bold text-lg hover:bg-slate-200 transition">
+        ← 修正する
+    </a>
 </div>
 @endsection
