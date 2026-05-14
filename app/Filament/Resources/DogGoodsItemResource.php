@@ -2,10 +2,12 @@
 
 namespace App\Filament\Resources;
 
+use App\Enums\ProductType;
 use App\Filament\Resources\DogGoodsItemResource\Pages;
 use App\Models\DogGoodsItem;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -22,29 +24,77 @@ class DogGoodsItemResource extends Resource
     public static function form(Form $form): Form
     {
         return $form->schema([
-            Forms\Components\TextInput::make('name')
-                ->required()
-                ->maxLength(200),
+            Forms\Components\Section::make('基本情報')->schema([
+                Forms\Components\TextInput::make('name')
+                    ->label('商品名')
+                    ->required()
+                    ->maxLength(200),
 
-            Forms\Components\TextInput::make('price')
-                ->required()
-                ->numeric()
-                ->prefix('¥'),
+                Forms\Components\Select::make('product_type')
+                    ->label('商品タイプ')
+                    ->options(ProductType::class)
+                    ->required()
+                    ->default(ProductType::Basic)
+                    ->live()
+                    ->helperText(fn (Get $get) => match ($get('product_type')) {
+                        'nose_print'  => '🐽 購入者が犬の鼻紋画像をアップロードして注文するタイプです。',
+                        'silhouette'  => '🐕 購入者が犬の写真をアップロードしてシルエット加工するタイプです。',
+                        default       => '📦 通常の商品です。',
+                    }),
 
-            Forms\Components\Textarea::make('description')
-                ->rows(4)
-                ->columnSpanFull(),
+                Forms\Components\TextInput::make('price')
+                    ->label('価格')
+                    ->required()
+                    ->numeric()
+                    ->prefix('¥'),
 
-            Forms\Components\FileUpload::make('thumbnail_image')
-                ->image()
-                ->directory('items'),
+                Forms\Components\TextInput::make('sort_order')
+                    ->label('表示順')
+                    ->numeric()
+                    ->default(0),
 
-            Forms\Components\TextInput::make('sort_order')
-                ->numeric()
-                ->default(0),
+                Forms\Components\Toggle::make('is_active')
+                    ->label('公開')
+                    ->default(true),
+            ])->columns(2),
 
-            Forms\Components\Toggle::make('is_active')
-                ->default(true),
+            Forms\Components\Section::make('商品詳細')->schema([
+                Forms\Components\Textarea::make('description')
+                    ->label('説明文')
+                    ->rows(4)
+                    ->columnSpanFull(),
+
+                Forms\Components\FileUpload::make('thumbnail_image')
+                    ->label('サムネイル画像')
+                    ->image()
+                    ->imageEditor()
+                    ->directory('items')
+                    ->columnSpanFull(),
+            ]),
+
+            // 鼻紋商品専用セクション
+            Forms\Components\Section::make('🐽 鼻紋商品 — 注文フォーム案内文')
+                ->schema([
+                    Forms\Components\Textarea::make('nose_print_guide')
+                        ->label('鼻紋撮影ガイド文（購入フォームに表示）')
+                        ->placeholder("例：鼻の正面から、しっかりピントを合わせて撮影してください。\nフラッシュなしで明るい場所での撮影を推奨します。")
+                        ->rows(4)
+                        ->columnSpanFull(),
+                ])
+                ->visible(fn (Get $get) => $get('product_type') === 'nose_print')
+                ->collapsible(),
+
+            // シルエット商品専用セクション
+            Forms\Components\Section::make('🐕 シルエット商品 — 注文フォーム案内文')
+                ->schema([
+                    Forms\Components\Textarea::make('silhouette_guide')
+                        ->label('シルエット用写真ガイド文（購入フォームに表示）')
+                        ->placeholder("例：横向きで全身が写るように撮影してください。\n背景はシンプルな方が仕上がりがきれいになります。")
+                        ->rows(4)
+                        ->columnSpanFull(),
+                ])
+                ->visible(fn (Get $get) => $get('product_type') === 'silhouette')
+                ->collapsible(),
         ]);
     }
 
@@ -52,22 +102,34 @@ class DogGoodsItemResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\ImageColumn::make('thumbnail_image'),
+                Tables\Columns\ImageColumn::make('thumbnail_image')
+                    ->label('画像'),
 
                 Tables\Columns\TextColumn::make('name')
+                    ->label('商品名')
                     ->searchable(),
 
+                Tables\Columns\TextColumn::make('product_type')
+                    ->label('タイプ')
+                    ->badge(),
+
                 Tables\Columns\TextColumn::make('price')
+                    ->label('価格')
                     ->money('JPY')
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('sort_order')
+                    ->label('表示順')
                     ->sortable(),
 
                 Tables\Columns\IconColumn::make('is_active')
+                    ->label('公開')
                     ->boolean(),
             ])
             ->filters([
+                Tables\Filters\SelectFilter::make('product_type')
+                    ->label('タイプ')
+                    ->options(ProductType::class),
                 Tables\Filters\TernaryFilter::make('is_active'),
                 Tables\Filters\TrashedFilter::make(),
             ])

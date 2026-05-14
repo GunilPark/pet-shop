@@ -22,12 +22,16 @@ class DogGoodsOrder extends Model
         'uploaded_image',
         'processed_image',
         'admin_memo',
+        'custom_options',
+        'is_consultation',
         'ordered_at',
     ];
 
     protected $casts = [
         'order_status'      => OrderStatus::class,
         'processing_status' => ProcessingStatus::class,
+        'custom_options'    => 'array',
+        'is_consultation'   => 'boolean',
         'ordered_at'        => 'datetime',
     ];
 

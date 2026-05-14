@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\DogProfileController;
 use App\Http\Controllers\EventApplyController;
 use App\Http\Controllers\GoodsOrderController;
 use App\Models\DogGoodsEvent;
@@ -45,10 +46,18 @@ Route::middleware('auth')->group(function () {
 
     // 商品購入申請（要ログイン）
     Route::get('/goods/{item}/order', [GoodsOrderController::class, 'create'])->name('goods.order.create');
+    Route::post('/goods/{item}/preview', [GoodsOrderController::class, 'preview'])->name('goods.order.preview');
     Route::post('/goods/{item}/order', [GoodsOrderController::class, 'store'])->name('goods.order.store');
 
     // マイページ
     Route::get('/mypage', [ProfileController::class, 'mypage'])->name('mypage');
+
+    // 犬プロフィール CRUD
+    Route::get('/dog-profile/create', [DogProfileController::class, 'create'])->name('dog-profile.create');
+    Route::post('/dog-profile', [DogProfileController::class, 'store'])->name('dog-profile.store');
+    Route::get('/dog-profile/{dogProfile}/edit', [DogProfileController::class, 'edit'])->name('dog-profile.edit');
+    Route::patch('/dog-profile/{dogProfile}', [DogProfileController::class, 'update'])->name('dog-profile.update');
+    Route::delete('/dog-profile/{dogProfile}', [DogProfileController::class, 'destroy'])->name('dog-profile.destroy');
 });
 
 require __DIR__.'/auth.php';

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\ProductType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -13,17 +14,21 @@ class DogGoodsItem extends Model
 
     protected $fillable = [
         'name',
+        'product_type',
         'price',
         'description',
         'thumbnail_image',
+        'nose_print_guide',
+        'silhouette_guide',
         'is_active',
         'sort_order',
     ];
 
     protected $casts = [
-        'price'      => 'integer',
-        'is_active'  => 'boolean',
-        'sort_order' => 'integer',
+        'product_type' => ProductType::class,
+        'price'        => 'integer',
+        'is_active'    => 'boolean',
+        'sort_order'   => 'integer',
     ];
 
     public function orders(): HasMany

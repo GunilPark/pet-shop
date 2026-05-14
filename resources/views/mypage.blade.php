@@ -24,11 +24,20 @@
     <section class="mb-16">
         <div class="flex items-center justify-between mb-6">
             <h2 class="text-xl font-bold text-slate-900">🐶 愛犬プロフィール</h2>
+            <a href="{{ route('dog-profile.create') }}"
+               class="bg-orange-500 text-white px-5 py-2 rounded-xl font-bold text-sm hover:bg-orange-600 transition">
+                ＋ 追加する
+            </a>
         </div>
 
         @if($user->dogProfiles->isEmpty())
             <div class="bg-slate-50 rounded-[24px] p-8 text-center text-slate-400">
+                <div class="text-4xl mb-3">🐾</div>
                 <p>まだ犬のプロフィールが登録されていません。</p>
+                <a href="{{ route('dog-profile.create') }}"
+                   class="inline-block mt-4 bg-orange-500 text-white px-6 py-2 rounded-xl font-bold text-sm hover:bg-orange-600 transition">
+                    今すぐ登録する
+                </a>
             </div>
         @else
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -36,11 +45,11 @@
                     <div class="bg-white rounded-[24px] border border-slate-100 shadow-sm p-6 flex items-center gap-5">
                         @if($dog->profile_image)
                             <img src="{{ asset('storage/' . $dog->profile_image) }}"
-                                 class="w-16 h-16 rounded-full object-cover" alt="{{ $dog->name }}">
+                                 class="w-16 h-16 rounded-full object-cover flex-shrink-0" alt="{{ $dog->name }}">
                         @else
-                            <div class="w-16 h-16 rounded-full bg-orange-100 flex items-center justify-center text-3xl">🐶</div>
+                            <div class="w-16 h-16 rounded-full bg-orange-100 flex items-center justify-center text-3xl flex-shrink-0">🐶</div>
                         @endif
-                        <div>
+                        <div class="flex-1 min-w-0">
                             <div class="font-bold text-lg text-slate-900">{{ $dog->name }}</div>
                             <div class="text-sm text-slate-400">
                                 {{ $dog->breed }}
@@ -51,6 +60,10 @@
                                 <div class="text-xs text-slate-400 mt-1">体重 {{ $dog->weight }}kg</div>
                             @endif
                         </div>
+                        <a href="{{ route('dog-profile.edit', $dog) }}"
+                           class="text-slate-400 hover:text-orange-500 transition text-sm font-bold flex-shrink-0">
+                            編集
+                        </a>
                     </div>
                 @endforeach
             </div>
