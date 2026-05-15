@@ -17,12 +17,13 @@ class GoodsOrderController extends Controller
     {
         abort_if(! $item->is_active, 404);
 
-        // プレビューから「修正する」で戻ったときにセッションの入力内容を復元
         $saved = $request->session()->get('order_preview', []);
+        $user  = auth()->user();
+        $dogProfiles = $user->dogProfiles()->active()->get();
 
         return match($item->product_type) {
-            ProductType::NameTag => view('goods.order-name-tag', compact('item', 'saved')),
-            default              => view('goods.order-basic', compact('item', 'saved')),
+            ProductType::NameTag => view('goods.order-name-tag', compact('item', 'saved', 'user', 'dogProfiles')),
+            default              => view('goods.order-basic', compact('item', 'saved', 'user', 'dogProfiles')),
         };
     }
 
@@ -77,7 +78,7 @@ class GoodsOrderController extends Controller
 
         $order = DogGoodsOrder::create([
             'user_id'           => auth()->id(),
-            'dog_profile_id'    => null,
+            'dog_profile_id'    => $data['dog_profile_id'] ?? null,
             'item_id'           => $item->id,
             'order_status'      => OrderStatus::Pending,
             'processing_status' => ProcessingStatus::Pending,
@@ -100,7 +101,13 @@ class GoodsOrderController extends Controller
     private function validateBasic(Request $request): array
     {
         return $request->validate([
-            'quantity' => ['required', 'integer', 'min:1', 'max:10'],
+            'quantity'     => ['required', 'integer', 'min:1', 'max:10'],
+            'postal_code'  => ['required', 'string', 'max:8'],
+            'prefecture'   => ['required', 'string', 'max:20'],
+            'city'         => ['required', 'string', 'max:100'],
+            'address_line' => ['required', 'string', 'max:200'],
+            'phone'        => ['required', 'string', 'max:20'],
+            'shipping_name'=> ['required', 'string', 'max:100'],
         ]);
     }
 
@@ -115,6 +122,13 @@ class GoodsOrderController extends Controller
             'breed'           => ['nullable', 'string', 'max:50'],
             'birthday'        => ['nullable', 'string', 'max:20'],
             'message'         => ['nullable', 'string', 'max:100'],
+            'postal_code'     => ['required', 'string', 'max:8'],
+            'prefecture'      => ['required', 'string', 'max:20'],
+            'city'            => ['required', 'string', 'max:100'],
+            'address_line'    => ['required', 'string', 'max:200'],
+            'phone'           => ['required', 'string', 'max:20'],
+            'shipping_name'   => ['required', 'string', 'max:100'],
+            'dog_profile_id'  => ['nullable', 'integer'],
         ]);
 
         // 写真は uploaded_image か captured_image のどちらか必須
@@ -122,7 +136,7 @@ class GoodsOrderController extends Controller
             return back()->withErrors(['uploaded_image' => '写真を撮影またはアップロードしてください。'])->withInput()->throwResponse();
         }
 
-        return $request->only(['material', 'engraving_type', 'uploaded_image', 'captured_image', 'name', 'breed', 'birthday', 'message']);
+        return $request->only(['material', 'engraving_type', 'uploaded_image', 'captured_image', 'name', 'breed', 'birthday', 'message', 'postal_code', 'prefecture', 'city', 'address_line', 'phone', 'shipping_name', 'dog_profile_id']);
     }
 
     // ---- 画像ロード ----

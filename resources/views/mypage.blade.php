@@ -20,6 +20,88 @@
         </div>
     </div>
 
+    {{-- 住所情報 --}}
+    <section class="mb-16">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-xl font-bold text-slate-900">📦 配送先住所</h2>
+        </div>
+
+        @if(session('address_updated'))
+            <div class="bg-green-50 border border-green-200 text-green-700 px-6 py-3 rounded-2xl mb-4 font-bold text-sm">
+                ✅ 住所を更新しました
+            </div>
+        @endif
+
+        <div class="bg-white rounded-[24px] border border-slate-100 shadow-sm p-6" x-data="{ editing: false }">
+            {{-- 表示モード --}}
+            <div x-show="!editing">
+                @if($user->postal_code || $user->city)
+                    <div class="space-y-1 text-sm text-slate-700 mb-4">
+                        <p>〒{{ $user->postal_code }}</p>
+                        <p>{{ $user->prefecture }}{{ $user->city }}</p>
+                        <p>{{ $user->address_line }}</p>
+                        @if($user->phone) <p>📞 {{ $user->phone }}</p> @endif
+                    </div>
+                @else
+                    <p class="text-slate-400 text-sm mb-4">住所が登録されていません。注文時に毎回入力が必要です。</p>
+                @endif
+                <button type="button" @click="editing = true"
+                        class="text-sm font-bold text-orange-500 hover:text-orange-600 transition border border-orange-300 px-4 py-2 rounded-xl">
+                    ✏️ 住所を{{ $user->postal_code ? '変更する' : '登録する' }}
+                </button>
+            </div>
+
+            {{-- 編集モード --}}
+            <div x-show="editing" x-cloak>
+                <form method="POST" action="{{ route('mypage.address.update') }}" class="space-y-3">
+                    @csrf @method('PATCH')
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1">郵便番号</label>
+                            <input type="text" name="postal_code" value="{{ old('postal_code', $user->postal_code) }}"
+                                   placeholder="123-4567" maxlength="8"
+                                   class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1">電話番号</label>
+                            <input type="text" name="phone" value="{{ old('phone', $user->phone) }}"
+                                   placeholder="090-0000-0000" maxlength="20"
+                                   class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1">都道府県</label>
+                        <input type="text" name="prefecture" value="{{ old('prefecture', $user->prefecture) }}"
+                               placeholder="東京都" maxlength="20"
+                               class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1">市区町村</label>
+                        <input type="text" name="city" value="{{ old('city', $user->city) }}"
+                               placeholder="渋谷区" maxlength="100"
+                               class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1">番地・建物名</label>
+                        <input type="text" name="address_line" value="{{ old('address_line', $user->address_line) }}"
+                               placeholder="1-2-3 ○○マンション101号室" maxlength="200"
+                               class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300">
+                    </div>
+                    <div class="flex gap-3 pt-2">
+                        <button type="submit"
+                                class="bg-slate-900 text-white px-6 py-2 rounded-xl font-bold text-sm hover:bg-orange-500 transition">
+                            保存する
+                        </button>
+                        <button type="button" @click="editing = false"
+                                class="text-slate-400 px-4 py-2 rounded-xl text-sm hover:text-slate-600 transition border border-slate-200">
+                            キャンセル
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </section>
+
     {{-- 犬プロフィール一覧 --}}
     <section class="mb-16">
         <div class="flex items-center justify-between mb-6">

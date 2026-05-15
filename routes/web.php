@@ -51,6 +51,7 @@ Route::middleware('auth')->group(function () {
 
     // マイページ
     Route::get('/mypage', [ProfileController::class, 'mypage'])->name('mypage');
+    Route::patch('/mypage/address', [ProfileController::class, 'updateAddress'])->name('mypage.address.update');
 
     // 犬プロフィール CRUD
     Route::get('/dog-profile/create', [DogProfileController::class, 'create'])->name('dog-profile.create');

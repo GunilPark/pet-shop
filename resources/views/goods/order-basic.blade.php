@@ -20,20 +20,24 @@
         </div>
     </div>
 
-    <div class="bg-white rounded-[32px] border border-slate-100 shadow-sm p-10">
-        <h3 class="text-xl font-bold text-slate-900 mb-6">購入内容</h3>
-
+    <div class="bg-white rounded-[32px] border border-slate-100 shadow-sm p-8">
         <form method="POST" action="{{ route('goods.order.preview', $item) }}">
             @csrf
 
-            <div class="mb-6">
-                <label class="block text-sm font-bold text-slate-700 mb-2">数量</label>
-                <select name="quantity" class="w-full border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-300">
+            {{-- 数量 --}}
+            <div class="mb-8">
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">数量</p>
+                <select name="quantity" class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300">
                     @for($i = 1; $i <= 10; $i++)
-                        <option value="{{ $i }}" {{ old('quantity', 1) == $i ? 'selected' : '' }}>{{ $i }}個</option>
+                        <option value="{{ $i }}" {{ old('quantity', $saved['quantity'] ?? 1) == $i ? 'selected' : '' }}>{{ $i }}個</option>
                     @endfor
                 </select>
             </div>
+
+            <hr class="border-slate-100 mb-8">
+
+            {{-- 住所セクション --}}
+            @include('goods._address_section', ['user' => $user, 'saved' => $saved])
 
             <button type="submit" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold text-lg hover:bg-orange-500 transition shadow-lg">
                 確認画面へ進む →

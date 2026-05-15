@@ -184,27 +184,35 @@
                 @error('captured_image')  <p class="text-red-500 text-sm mt-1">{{ $message }}</p> @enderror
             </div>
 
-            {{-- STEP 4: 名前・情報 --}}
-            <div class="mb-10">
-                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">STEP 4 — 名前・情報を入力</p>
+            {{-- STEP 4: ペット選択 --}}
+            @include('goods._pet_section', ['user' => $user, 'dogProfiles' => $dogProfiles, 'saved' => $saved])
+
+            <hr class="border-slate-100 mb-8">
+
+            {{-- STEP 5: 名前・情報 --}}
+            <div class="mb-8">
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">STEP 5 — 名前・情報を入力</p>
                 <div class="space-y-4">
-                    <div>
+                    <div @fill-pet.window="$refs.nameInput.value = $event.detail.name.toUpperCase()">
                         <label class="block text-xs font-bold text-slate-500 mb-1">名前（表面・裏面に入ります） <span class="text-red-500">*</span></label>
-                        <input type="text" name="name" value="{{ old('name', $saved['name'] ?? '') }}" required maxlength="50"
+                        <input type="text" name="name" x-ref="nameInput"
+                               value="{{ old('name', $saved['name'] ?? '') }}" required maxlength="50"
                                placeholder="例：MOCHI"
                                class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 uppercase">
                         <p class="text-xs text-slate-400 mt-1">アルファベット推奨（大文字で刻印）</p>
                         @error('name') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
-                    <div>
+                    <div @fill-pet.window="$refs.breedInput.value = $event.detail.breed">
                         <label class="block text-xs font-bold text-slate-500 mb-1">犬種</label>
-                        <input type="text" name="breed" value="{{ old('breed', $saved['breed'] ?? '') }}" maxlength="50"
+                        <input type="text" name="breed" x-ref="breedInput"
+                               value="{{ old('breed', $saved['breed'] ?? '') }}" maxlength="50"
                                placeholder="例：ブルドッグ"
                                class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300">
                     </div>
-                    <div>
+                    <div @fill-pet.window="$refs.birthdayInput.value = $event.detail.birthday">
                         <label class="block text-xs font-bold text-slate-500 mb-1">誕生日</label>
-                        <input type="text" name="birthday" value="{{ old('birthday', $saved['birthday'] ?? '') }}" maxlength="20"
+                        <input type="text" name="birthday" x-ref="birthdayInput"
+                               value="{{ old('birthday', $saved['birthday'] ?? '') }}" maxlength="20"
                                placeholder="例：2020.05.03"
                                class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300">
                     </div>
@@ -216,6 +224,11 @@
                     </div>
                 </div>
             </div>
+
+            <hr class="border-slate-100 mb-8">
+
+            {{-- STEP 6: 配送先住所 --}}
+            @include('goods._address_section', ['user' => $user, 'saved' => $saved])
 
             <button type="submit"
                     class="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold text-lg hover:bg-orange-500 transition shadow-lg">

@@ -159,11 +159,11 @@
     @endif
 
     {{-- 入力内容サマリー --}}
-    <div class="bg-white rounded-[24px] border border-slate-100 shadow-sm p-6 mb-8">
-        <h3 class="font-bold text-slate-700 text-sm mb-4">入力内容の確認</h3>
+    <div class="bg-white rounded-[24px] border border-slate-100 shadow-sm p-6 mb-4">
+        <h3 class="font-bold text-slate-700 text-sm mb-4">商品オプション</h3>
         <dl class="space-y-2 text-sm">
             @php
-                $labels = [
+                $optionLabels = [
                     'material'       => '素材',
                     'engraving_type' => '刻印タイプ',
                     'name'           => '名前',
@@ -172,24 +172,36 @@
                     'message'        => 'メッセージ',
                     'quantity'       => '数量',
                 ];
-                $skip = ['temp_image'];
+                $optionSkip = ['temp_image', 'postal_code', 'prefecture', 'city', 'address_line', 'phone', 'shipping_name', 'dog_profile_id'];
                 $displayValues = [
                     'material'       => ['black' => '黒メタル（軍番タグ）', 'wood' => '木製（ウッドキーホルダー）'],
                     'engraving_type' => ['nose_print' => '鼻紋', 'silhouette' => 'シルエット'],
                 ];
             @endphp
             @foreach($data as $key => $val)
-                @if(!in_array($key, $skip) && is_string($val) && $val !== '')
+                @if(!in_array($key, $optionSkip) && is_string($val) && $val !== '')
                     <div class="flex gap-3">
-                        <dt class="text-slate-400 w-36 flex-shrink-0">{{ $labels[$key] ?? $key }}</dt>
-                        <dd class="text-slate-900 font-medium">
-                            {{ $displayValues[$key][$val] ?? $val }}
-                        </dd>
+                        <dt class="text-slate-400 w-36 flex-shrink-0">{{ $optionLabels[$key] ?? $key }}</dt>
+                        <dd class="text-slate-900 font-medium">{{ $displayValues[$key][$val] ?? $val }}</dd>
                     </div>
                 @endif
             @endforeach
         </dl>
     </div>
+
+    {{-- 配送先住所 --}}
+    @if(!empty($data['shipping_name']))
+    <div class="bg-white rounded-[24px] border border-slate-100 shadow-sm p-6 mb-8">
+        <h3 class="font-bold text-slate-700 text-sm mb-4">📦 配送先</h3>
+        <div class="text-sm text-slate-700 space-y-0.5">
+            <p class="font-bold">{{ $data['shipping_name'] }}</p>
+            <p>〒{{ $data['postal_code'] ?? '' }}</p>
+            <p>{{ ($data['prefecture'] ?? '') . ($data['city'] ?? '') }}</p>
+            <p>{{ $data['address_line'] ?? '' }}</p>
+            @if(!empty($data['phone'])) <p class="text-slate-400">📞 {{ $data['phone'] }}</p> @endif
+        </div>
+    </div>
+    @endif
 
     {{-- アクションボタン --}}
     <form method="POST" action="{{ route('goods.order.store', $item) }}">

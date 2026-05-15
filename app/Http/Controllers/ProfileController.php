@@ -50,6 +50,21 @@ class ProfileController extends Controller
         return view('mypage', compact('user'));
     }
 
+    public function updateAddress(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'postal_code'  => ['nullable', 'string', 'max:8'],
+            'prefecture'   => ['nullable', 'string', 'max:20'],
+            'city'         => ['nullable', 'string', 'max:100'],
+            'address_line' => ['nullable', 'string', 'max:200'],
+            'phone'        => ['nullable', 'string', 'max:20'],
+        ]);
+
+        $request->user()->update($request->only(['postal_code', 'prefecture', 'city', 'address_line', 'phone']));
+
+        return Redirect::route('mypage')->with('address_updated', true);
+    }
+
     /**
      * Delete the user's account.
      */
