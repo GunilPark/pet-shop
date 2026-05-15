@@ -25,6 +25,8 @@
 | 管理画面 | Filament v3（ユーザー・商品・注文・イベント管理） |
 | メールフロー | 新規注文／相談申請／プレビュー送信／決済案内（MailHog対応） |
 | 決済ページ | トークン認証・ログイン不要（決済処理は未実装） |
+| 注文ステータス管理 | 管理者がフロー別にステータスをボタン操作で更新 |
+| 注文キャンセル | 管理者・ユーザー双方からキャンセル可能（配送前のみ） |
 
 ---
 
@@ -109,13 +111,20 @@
 | user_id | FK → users | cascade delete |
 | dog_profile_id | FK → dog_profiles | nullable / restrict |
 | item_id | FK → dog_goods_items | restrict |
+| quantity | smallint unsigned | default: 1 |
+| shipping_name | string | nullable（宛名） |
+| postal_code | string(10) | nullable（インデックスあり） |
+| prefecture | string(20) | nullable |
+| city | string(100) | nullable |
+| address_line | string(200) | nullable |
+| phone | string(20) | nullable |
 | order_status | enum | pending / paid / preparing / shipping / delivered / canceled |
-| processing_status | enum | pending / reviewing / processing / completed / rejected |
+| processing_status | enum | pending / reviewing / confirmed / processing / shipping / delivered / completed / rejected |
 | consultation_status | enum | none / waiting / replied / resolved |
 | payment_status | enum | unsent / sent / paid / expired |
 | uploaded_image | string | nullable（アップロード画像path） |
 | processed_image | string | nullable（加工済画像path） |
-| custom_options | json | nullable（注文フォーム入力内容＋配送先住所） |
+| custom_options | json | nullable（商品オプションのみ。住所・数量は専用カラムへ） |
 | is_consultation | boolean | default: false（メール相談フラグ） |
 | admin_memo | text | nullable |
 | payment_token | string(64) | nullable / unique（決済URL用） |
@@ -124,7 +133,7 @@
 | ordered_at | timestamp | |
 | deleted_at | timestamp | SoftDelete |
 
-#### custom_options の構造（JSON）
+#### custom_options の構造（JSON）※商品オプションのみ
 ```json
 {
   "material": "black|wood",
@@ -133,12 +142,6 @@
   "breed": "犬種",
   "birthday": "YYYY.MM.DD",
   "message": "裏面メッセージ",
-  "shipping_name": "宛名",
-  "postal_code": "1234567",
-  "prefecture": "都道府県",
-  "city": "市区町村",
-  "address_line": "番地・建物名",
-  "phone": "電話番号",
   "dog_profile_id": null,
   "temp_image": "orders/temp/eng_xxx.jpg"
 }
@@ -193,25 +196,46 @@
 ## 4. Enum 定義
 
 ### ProductType
-| Case | Value | ラベル | 運用状況 |
-|------|-------|--------|----------|
-| Basic | basic | 基本商品 | 有効 |
-| NameTag | name_tag | ネームタグ | 有効（メイン商品） |
-| NosePrintTag | nose_print_tag | 鼻紋ネームタグ | 旧型（DB互換のため残存） |
-| SilhouetteTag | silhouette_tag | シルエットネームタグ | 旧型 |
-| SilhouetteKeychain | silhouette_keychain | シルエットキーホルダー | 旧型 |
+| Case | Value | ラベル |
+|------|-------|--------|
+| Basic | basic | 基本商品 |
+| NameTag | name_tag | ネームタグ |
+| NosePrintTag | nose_print_tag | 鼻紋ネームタグ（旧型） |
+| SilhouetteTag | silhouette_tag | シルエットネームタグ（旧型） |
+| SilhouetteKeychain | silhouette_keychain | シルエットキーホルダー（旧型） |
 
 ### OrderStatus
-`pending` → `paid` → `preparing` → `shipping` → `delivered`（または `canceled`）
+`pending`（未払い）→ `paid`（支払済）→ `shipping`（発送中）→ `delivered`（配達完了）
+または `canceled`（キャンセル）
 
-### ProcessingStatus
-`pending` → `reviewing` → `processing` → `completed`（または `rejected`）
+### ProcessingStatus（進捗ステータス）
+
+**相談なしフロー：**
+```
+confirmed（注文確定）→ [入金確認済みボタン] → processing（加工中）→ [発送ボタン] → shipping（配送中）→ [配達完了ボタン] → delivered（配達完了）
+```
+
+**相談ありフロー：**
+```
+reviewing（確認中）→ [加工開始ボタン] → processing（加工中）→ [発送ボタン] → shipping（配送中）→ [配達完了ボタン] → delivered（配達完了）
+```
+
+| Value | ラベル | マイページ表示 |
+|-------|--------|--------------|
+| pending | 未確認 | 受付中 |
+| reviewing | 確認中 | 確認中 |
+| confirmed | 注文確定 | 注文確定 |
+| processing | 加工中 | 制作中 |
+| shipping | 配送中 | 配送中 |
+| delivered | 配達完了 | 配達完了 ✓ |
+| completed | 完了 | 完了 |
+| rejected | 却下 | キャンセル |
 
 ### ConsultationStatus
 `none` → `waiting` → `replied` → `resolved`
 
 ### PaymentStatus
-`unsent` → `sent` → `paid`（または `expired`）
+`unsent`（未送信）→ `sent`（送信済）→ `paid`（支払済）または `expired`（期限切れ）
 
 ### ApplyStatus
 `applied` → `approved`（または `rejected` / `canceled`）
@@ -232,8 +256,9 @@
 | `/goods/{item}/preview` | goods/order-preview.blade.php | 注文確認・プレビュー |
 | `/event` | event.blade.php | イベント一覧 |
 | `/event/{event}/apply` | event/apply.blade.php | イベント参加申請フォーム |
-| `/mypage` | mypage.blade.php | マイページ（住所管理・注文・申請履歴） |
+| `/mypage` | mypage.blade.php | マイページ（住所管理・注文・申請履歴・キャンセル） |
 | `/mypage/address` | — | 住所更新（PATCH） |
+| `/mypage/orders/{order}/cancel` | — | 注文キャンセル（DELETE） |
 | `/dog-profile/create` | dog-profile/create.blade.php | 犬プロフィール登録 |
 | `/dog-profile/{id}/edit` | dog-profile/edit.blade.php | 犬プロフィール編集 |
 | `/payment/{token}` | payment/show.blade.php | 決済ページ（ログイン不要） |
@@ -244,7 +269,7 @@
 | `/admin` | ダッシュボード |
 | `/admin/users` | ユーザー管理（犬プロフィールRelationManager内包） |
 | `/admin/dog-goods-items` | グッズ商品管理（複数画像・ガイド文管理） |
-| `/admin/dog-goods-orders` | 注文管理（加工開始／プレビュー送信／決済メール送信） |
+| `/admin/dog-goods-orders` | 注文管理（各種ステータス操作アクション） |
 | `/admin/dog-goods-events` | イベント管理 |
 | `/admin/dog-event-applies` | 参加申請管理 |
 
@@ -276,7 +301,7 @@
  │    └─ ボタン：「購入確定」or「メール相談」or「修正する」
  │
  └─ POST /goods/{item}/order       注文保存
-      ├─ DogGoodsOrder 作成
+      ├─ DogGoodsOrder 作成（processing_status = confirmed）
       ├─ 管理者へ新規注文通知メール（NewOrderAdminMail）
       └─ ユーザーへ受付完了メール（NewOrderUserMail）
 ```
@@ -285,10 +310,12 @@
 ```
 顧客が「メールで相談する」を選択
  │
- ├─ 注文登録（is_consultation=true）
+ ├─ 注文登録（is_consultation=true, processing_status = reviewing）
  ├─ 管理者へ相談申請メール（ConsultationMail）
  │
  └─ 管理画面（Filament）
+      ├─ 「加工開始」アクション（reviewing → processing）
+      │
       ├─ 「プレビュー送信」アクション
       │    ├─ 加工画像アップロード
       │    ├─ 担当者コメント入力
@@ -340,6 +367,7 @@
 - 共通HTMLレイアウト：`resources/views/emails/layouts/base.blade.php`
 - 注文情報共通パーツ：`resources/views/emails/partials/order-info.blade.php`
 - 開発環境：MailHog（localhost:1025 / UI: localhost:8025）
+- エラーハンドリング：try-catch でラップ、失敗時は `Log::error` に記録（注文処理は続行）
 
 ### 決済メール仕様
 - トークン：64文字ランダム文字列（`Str::random(64)`）
@@ -359,15 +387,19 @@
 | イベント管理 | DogGoodsEventResource, DogEventApplyResource |
 
 ### DogGoodsOrderResource アクション
-| アクション | 条件 | 内容 |
-|-----------|------|------|
-| 加工開始 | processing_status = reviewing | reviewing → processing に変更 |
+| アクション | 表示条件 | 内容 |
+|-----------|----------|------|
+| 加工開始 | processing_status = reviewing | reviewing → processing |
+| 入金確認済み | 相談なし かつ confirmed | payment_status=Paid / order_status=Paid / processing_status=Processing |
 | プレビュー送信 | is_consultation = true | 画像＋コメント入力 → PreviewImageMail 送信 |
-| 決済メール送信 | is_consultation = true かつ未支払 | PaymentMail 送信・トークン生成 |
+| 発送する | confirmed または processing | processing_status=Shipping / order_status=Shipping |
+| 配達完了にする | shipping | processing_status=Delivered / order_status=Delivered |
+| 決済メール送信 | is_consultation かつ 未支払 | PaymentMail 送信・トークン生成 |
+| キャンセル | 配送前（shipping/delivered/completed/rejected 以外） | processing_status=Rejected / order_status=Canceled |
 
-### DogGoodsEventResource 主要機能
-- 定員・申請数のリアルタイム表示
-- DogEventApplyResource でステータス管理（approve / reject アクション）
+### フィルター・ソート
+- 進捗・注文・決済ステータス（複数選択）・相談ありフィルターをテーブル上部に常時表示
+- デフォルトソート：processing_status 順 → ordered_at 降順
 
 ---
 
@@ -379,6 +411,7 @@
 | 管理者認証 | Filament 独自（`php artisan make:filament-user`） |
 | 犬プロフィール保護 | `abort_if($dogProfile->user_id !== auth()->id(), 403)` |
 | 注文フォーム保護 | `auth` ミドルウェア |
+| 注文キャンセル保護 | `abort_if($order->user_id !== auth()->id(), 403)` |
 | 決済ページ | トークン認証のみ（ログイン不要） |
 
 ---
@@ -399,45 +432,92 @@
 
 ---
 
-## 12. 今後の拡張予定
+## 12. 残タスク・今後の拡張予定
 
-| 機能 | 状態 |
-|------|------|
-| 決済連携（Stripe等） | 未実装（/payment/{token} ページのみ実装済み） |
-| AI API連携プレビュー生成 | 未実装（現在はPHP GDで近似処理） |
-| 一時ファイル自動クリーンアップ | 未実装（下記メモ参照） |
-| カレンダー・時計商品タイプ追加 | 未実装 |
-| 注文ステータス変更通知メール | 未実装 |
-| 多言語対応 | 未実装 |
-| 本番環境デプロイ設定 | 未実装 |
-
-### 一時ファイル自動クリーンアップ（タスクメモ）
-
-プレビュー確認画面に進むと `storage/app/public/orders/temp/eng_xxxxx.jpg` が生成される。
-注文完了時は `orders/uploaded/` に移動されるが、途中離脱した場合はファイルが残り続ける。
-
-**推奨実装方法：Artisanコマンド + スケジューラー**
-
-```bash
-php artisan make:command CleanTempImages
-```
-
-```php
-// app/Console/Commands/CleanTempImages.php
-// storage/app/public/orders/temp/ 以下の
-// 更新日時が24時間以上前のファイルを削除する
-```
-
-```php
-// app/Console/Kernel.php
-$schedule->command('app:clean-temp-images')->daily();
-```
-
-優先度：低（ストレージ圧迫は緩やか。本番デプロイ前までに対応推奨）
+| # | 機能 | 優先度 | 状態 |
+|---|------|--------|------|
+| 1 | AI API連携プレビュー生成 | 高 | 未実装（現在はPHP GDで近似処理） |
+| 2 | 決済連携（Stripe等） | 高 | 未実装（/payment/{token} ページのみ実装済み） |
+| 3 | 入力バリデーション強化 | 中 | 未実装（下記メモ参照） |
+| 4 | セキュリティー対策 | 中 | 未実装（下記メモ参照） |
+| 5 | 全体テスト | 中 | 未実施 |
+| 6 | マイページ注文詳細ページ | 中 | 未実装（下記メモ参照） |
+| 7 | 一時ファイル自動クリーンアップ | 低 | 未実装（下記メモ参照） |
+| 8 | 注文ステータス変更通知メール | 低 | 未実装 |
+| 9 | 本番環境デプロイ設定 | — | 未実装 |
 
 ---
 
-### マイページ注文詳細ページ（タスクメモ）
+### ① AI API連携プレビュー生成
+
+現在はPHP GDライブラリでグレースケール＋反転の近似処理のみ。
+将来的にAI APIと連携し、より精度の高いエングレービング風画像を生成する。
+
+---
+
+### ② 決済連携（Stripe等）
+
+`/payment/{token}` ページは実装済み。POSTで `payment_status=Paid` に更新するが、実際の課金処理は未実装。
+Stripe Checkout または Payment Intents API との連携が必要。
+
+---
+
+### ③ 入力バリデーション強化
+
+現状の未対応バリデーション：
+
+| 項目 | 現状 | 対応内容 |
+|------|------|----------|
+| 郵便番号フォーマット | 文字列のみ | `regex:/^\d{3}-?\d{4}$/` |
+| 電話番号フォーマット | 文字列のみ | `regex:/^[0-9\-+]{10,15}$/` |
+| 画像ファイルサイズ上限 | 10MB | ユーザーへのエラーメッセージ改善 |
+| 注文数量上限 | min:1 max:10 | 在庫数との連動（未実装） |
+| XSS対策 | Bladeの`{{ }}`で自動エスケープ | カスタム入力欄の確認 |
+
+---
+
+### ④ セキュリティー対策
+
+| 項目 | 現状 | 対応内容 |
+|------|------|----------|
+| CSRF | LaravelデフォルトCSRFトークン | 確認済み |
+| SQLインジェクション | Eloquent ORM使用 | 確認済み |
+| 認可チェック | 主要ルートに実装済み | Policy クラスへの統一化を検討 |
+| レートリミット | 未設定 | 注文・メール送信APIにリミット追加 |
+| ファイルアップロード | MIME・サイズチェックあり | 実行可能ファイルの除外確認 |
+| 決済トークン | 64文字ランダム | 使用済みトークンの再利用防止確認 |
+| 管理画面アクセス制限 | Filamentの認証のみ | IP制限・2FAを本番前に検討 |
+
+---
+
+### ⑤ 全体テスト
+
+本番デプロイ前に確認すべきテスト項目：
+
+**購入フロー**
+- [ ] 相談なし注文の完全フロー（入力→プレビュー→確定→マイページ反映）
+- [ ] 相談あり注文の完全フロー（入力→相談→プレビュー受信→決済→完了）
+- [ ] カメラ撮影フロー（鼻紋・シルエット両方）
+- [ ] マイページからのキャンセル
+- [ ] セッション切れ時のリダイレクト
+
+**管理画面**
+- [ ] 全ステータス遷移ボタンの動作確認
+- [ ] プレビュー画像送信→メール受信確認
+- [ ] 決済メール送信→決済ページ表示→支払い完了
+
+**メール**
+- [ ] 全5種類のメール送信確認（MailHog）
+- [ ] メール送信失敗時にログ記録されること
+
+**エッジケース**
+- [ ] 決済トークン期限切れ（7日後）
+- [ ] 支払済み注文への再アクセス
+- [ ] 他ユーザーの注文へのアクセス（403確認）
+
+---
+
+### ⑥ マイページ注文詳細ページ
 
 **実装内容**
 - ルート：`GET /mypage/orders/{order}` → `mypage.order.show`
@@ -446,16 +526,25 @@ $schedule->command('app:clean-temp-images')->daily();
 - マイページ注文カードに「詳細を見る」リンク追加
 
 **相談履歴（DogGoodsConsultation）の保持方針**
-
-| | 残す | 消す |
-|---|---|---|
-| メリット | やり取りの経緯・証拠が残る。クレーム対応に使える | DBとストレージが肥大化しない。個人情報管理しやすい |
-| 問題点 | 個人情報（画像）が長期間残る。退会後の扱いが曖昧になる | 過去のプレビュー内容が確認できなくなる。復元不可 |
-
-**結論（推奨方針）**
 - テキスト（`sent_at`・`reply_message`）は残す → トラブル対応の記録として有効
-- 採用された最終画像は `dog_goods_orders.processed_image` に保存済みのため重複
-- **注文完了後に `DogGoodsConsultation.preview_image` のファイルだけ削除**、レコード自体は残す
+- 注文完了後に `preview_image` のファイルだけ削除、レコード自体は残す
 - 退会処理時にユーザー紐づきの画像ファイルを一括削除する処理も将来的に必要
 
-優先度：中（相談機能を使う顧客が増えてきたら対応推奨）
+優先度：中
+
+---
+
+### ⑦ 一時ファイル自動クリーンアップ
+
+`storage/app/public/orders/temp/` 以下に注文途中離脱で残るファイルを定期削除する。
+
+**推奨実装方法：Artisanコマンド + スケジューラー**
+```php
+// app/Console/Commands/CleanTempImages.php
+// 更新日時が24時間以上前のファイルを削除
+
+// app/Console/Kernel.php
+$schedule->command('app:clean-temp-images')->daily();
+```
+
+優先度：低（本番デプロイ前までに対応推奨）
