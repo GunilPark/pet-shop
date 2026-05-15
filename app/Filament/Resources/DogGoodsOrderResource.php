@@ -158,11 +158,12 @@ class DogGoodsOrderResource extends Resource
                     ->visible(fn (DogGoodsOrder $r) => $r->processing_status === ProcessingStatus::Reviewing)
                     ->action(fn (DogGoodsOrder $r) => $r->update(['processing_status' => ProcessingStatus::Processing])),
 
-                // ② 再加工画像送信
+                // ② 再加工画像送信（相談注文のみ）
                 Tables\Actions\Action::make('sendPreview')
                     ->label('プレビュー送信')
                     ->icon('heroicon-o-photo')
                     ->color('info')
+                    ->visible(fn (DogGoodsOrder $r) => $r->is_consultation)
                     ->form([
                         Forms\Components\FileUpload::make('preview_image')
                             ->label('加工プレビュー画像')
@@ -200,14 +201,14 @@ class DogGoodsOrderResource extends Resource
                             ->send();
                     }),
 
-                // ③ 決済メール送信
+                // ③ 決済メール送信（相談注文のみ・支払済以外）
                 Tables\Actions\Action::make('sendPayment')
                     ->label('決済メール送信')
                     ->icon('heroicon-o-credit-card')
                     ->color('success')
                     ->requiresConfirmation()
                     ->modalDescription('顧客に決済リンクメールを送信します。送信後7日間有効です。')
-                    ->visible(fn (DogGoodsOrder $r) => $r->payment_status !== PaymentStatus::Paid)
+                    ->visible(fn (DogGoodsOrder $r) => $r->is_consultation && $r->payment_status !== PaymentStatus::Paid)
                     ->action(function (DogGoodsOrder $record) {
                         $token = $record->generatePaymentToken();
 
