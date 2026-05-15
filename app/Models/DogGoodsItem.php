@@ -18,6 +18,7 @@ class DogGoodsItem extends Model
         'price',
         'description',
         'thumbnail_image',
+        'product_images',
         'nose_print_guide',
         'silhouette_guide',
         'is_active',
@@ -27,8 +28,9 @@ class DogGoodsItem extends Model
     protected $casts = [
         'product_type' => ProductType::class,
         'price'        => 'integer',
-        'is_active'    => 'boolean',
-        'sort_order'   => 'integer',
+        'is_active'       => 'boolean',
+        'sort_order'      => 'integer',
+        'product_images'  => 'array',
     ];
 
     public function orders(): HasMany

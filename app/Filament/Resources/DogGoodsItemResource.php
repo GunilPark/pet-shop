@@ -65,9 +65,19 @@ class DogGoodsItemResource extends Resource
                     ->columnSpanFull(),
 
                 Forms\Components\FileUpload::make('thumbnail_image')
-                    ->label('サムネイル画像')
+                    ->label('サムネイル画像（一覧表示用・メイン）')
                     ->image()
                     ->imageEditor()
+                    ->directory('items')
+                    ->columnSpanFull(),
+
+                Forms\Components\FileUpload::make('product_images')
+                    ->label('商品画像（複数枚・詳細ページに表示）')
+                    ->image()
+                    ->imageEditor()
+                    ->multiple()
+                    ->reorderable()
+                    ->appendFiles()
                     ->directory('items')
                     ->columnSpanFull(),
             ]),

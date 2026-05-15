@@ -7,18 +7,74 @@
         <a href="/goods" class="text-slate-400 text-sm hover:text-orange-500 transition">← グッズ一覧に戻る</a>
     </div>
 
-    {{-- 商品情報 --}}
-    <div class="bg-slate-900 rounded-[32px] p-6 mb-8 flex gap-5 items-center">
-        @if($item->thumbnail_image)
-            <img src="{{ asset('storage/' . $item->thumbnail_image) }}" class="w-20 h-20 rounded-2xl object-cover">
-        @else
-            <div class="w-20 h-20 rounded-2xl bg-slate-700 flex items-center justify-center text-3xl">🏷️</div>
-        @endif
-        <div>
-            <p class="text-xs text-slate-400 font-bold uppercase tracking-widest">Name Tag</p>
-            <h2 class="text-xl font-black text-white">{{ $item->name }}</h2>
-            <p class="text-orange-400 font-black text-lg">¥{{ number_format($item->price) }}</p>
+    {{-- 商品画像スライダー --}}
+    @php
+        $allImages = collect();
+        if ($item->thumbnail_image) $allImages->push(asset('storage/' . $item->thumbnail_image));
+        foreach (($item->product_images ?? []) as $p) {
+            $url = asset('storage/' . $p);
+            if (! $allImages->contains($url)) $allImages->push($url);
+        }
+    @endphp
+
+    <div x-data="{ current: 0, images: {{ $allImages->values()->toJson() }} }" class="mb-8">
+        {{-- メイン画像 --}}
+        <div class="relative rounded-[32px] overflow-hidden bg-slate-900 shadow-xl"
+             style="aspect-ratio: 4/3;">
+            <template x-if="images.length > 0">
+                <template x-for="(img, i) in images" :key="i">
+                    <img :src="img"
+                         x-show="current === i"
+                         class="absolute inset-0 w-full h-full object-cover transition-opacity duration-300">
+                </template>
+            </template>
+            <template x-if="images.length === 0">
+                <div class="absolute inset-0 flex items-center justify-center text-6xl">🏷️</div>
+            </template>
+
+            {{-- 商品名オーバーレイ --}}
+            <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent px-6 py-5">
+                <p class="text-xs text-orange-400 font-bold uppercase tracking-widest mb-1">Name Tag</p>
+                <h2 class="text-xl font-black text-white">{{ $item->name }}</h2>
+                <p class="text-orange-400 font-black">¥{{ number_format($item->price) }}</p>
+            </div>
+
+            {{-- 前後ボタン --}}
+            <template x-if="images.length > 1">
+                <div>
+                    <button type="button"
+                            @click="current = (current - 1 + images.length) % images.length"
+                            class="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/40 hover:bg-black/70 text-white rounded-full font-bold text-xl transition">‹</button>
+                    <button type="button"
+                            @click="current = (current + 1) % images.length"
+                            class="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/40 hover:bg-black/70 text-white rounded-full font-bold text-xl transition">›</button>
+                </div>
+            </template>
+
+            {{-- ドットインジケーター --}}
+            <template x-if="images.length > 1">
+                <div class="absolute top-3 right-3 flex gap-1.5">
+                    <template x-for="(img, i) in images" :key="i">
+                        <button type="button" @click="current = i"
+                                :class="current === i ? 'bg-orange-400 w-4' : 'bg-white/50 w-2'"
+                                class="h-2 rounded-full transition-all duration-300"></button>
+                    </template>
+                </div>
+            </template>
         </div>
+
+        {{-- サムネイル列 --}}
+        <template x-if="images.length > 1">
+            <div class="flex gap-2 mt-3 overflow-x-auto pb-1">
+                <template x-for="(img, i) in images" :key="i">
+                    <button type="button" @click="current = i"
+                            :class="current === i ? 'ring-2 ring-orange-500 opacity-100' : 'ring-1 ring-slate-200 opacity-50'"
+                            class="flex-shrink-0 w-14 h-14 rounded-xl overflow-hidden transition-all">
+                        <img :src="img" class="w-full h-full object-cover">
+                    </button>
+                </template>
+            </div>
+        </template>
     </div>
 
     <div class="bg-white rounded-[32px] border border-slate-100 shadow-sm p-8">
