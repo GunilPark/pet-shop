@@ -64,8 +64,10 @@ class GoodsOrderController extends Controller
     {
         abort_if(! $item->is_active, 404);
 
-        $data = $request->session()->pull('order_preview');
-        abort_if(! $data, 400);
+        $data = $request->session()->get('order_preview');
+        if (! $data) {
+            return redirect()->route('goods.order.create', $item)->with('error', 'セッションが切れました。もう一度入力してください。');
+        }
 
         $isConsultation = $request->input('action') === 'consult';
 
@@ -76,9 +78,10 @@ class GoodsOrderController extends Controller
             $uploadedImage = $final;
         }
 
-        $order = DogGoodsOrder::create([
+        // 相談・購入どちらも注文レコードを作成（決済は今後実装予定）
+        DogGoodsOrder::create([
             'user_id'           => auth()->id(),
-            'dog_profile_id'    => $data['dog_profile_id'] ?? null,
+            'dog_profile_id'    => ($data['dog_profile_id'] ?? '') !== '' ? $data['dog_profile_id'] : null,
             'item_id'           => $item->id,
             'order_status'      => OrderStatus::Pending,
             'processing_status' => ProcessingStatus::Pending,
@@ -88,9 +91,10 @@ class GoodsOrderController extends Controller
             'ordered_at'        => now(),
         ]);
 
+        $request->session()->forget('order_preview');
+
         if ($isConsultation) {
-            $this->sendConsultationMail($order, $item);
-            return redirect()->route('mypage')->with('success', 'ご相談を受け付けました！担当者よりメールでご連絡いたします。');
+            return redirect()->route('mypage')->with('success', 'ご相談を受け付けました！注文も登録されました。担当者よりご連絡いたします。');
         }
 
         return redirect()->route('mypage')->with('success', 'ご注文が完了しました！管理者確認後、加工を開始します。');

@@ -37,7 +37,7 @@ class DogGoodsItemResource extends Resource
                     ->default(ProductType::Basic)
                     ->live()
                     ->helperText(fn (Get $get) => match ($get('product_type')) {
-                        'name_tag'             => '🏷️ 素材（黒メタル/木製）と刻印タイプ（鼻紋/シルエット）を注文フォームで選択できる統合ネームタグ商品',
+                        'name_tag'             => '🏷️ 素材（黒プラスチック/木製）と刻印タイプ（鼻紋/シルエット）を注文フォームで選択できる統合ネームタグ商品',
                         'basic'                => '📦 通常の商品です。数量のみ選択して注文。',
                         default                => '',
                     }),

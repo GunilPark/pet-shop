@@ -38,7 +38,7 @@
             <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 text-center">— TAG PREVIEW —</h3>
             <p class="text-center text-xs mb-6"
                style="color: {{ $isWood ? '#92400e' : '#64748b' }}">
-                {{ $isWood ? '木製ウッドキーホルダー' : '黒メタル軍番タグ' }} ／
+                {{ $isWood ? '木製ウッドキーホルダー' : '黒プラスチック軍番タグ' }} ／
                 {{ $engravingType === 'nose_print' ? '鼻紋刻印' : 'シルエット刻印' }}
             </p>
 
@@ -71,7 +71,7 @@
                         </div>
 
                     @else
-                        {{-- 黒メタル軍番タグ --}}
+                        {{-- 黒プラスチック軍番タグ --}}
                         <div class="relative mx-auto bg-gray-900 shadow-2xl flex flex-col items-center justify-center"
                              style="width:120px; height:168px; border-radius:12px 12px 24px 24px;">
                             <div class="absolute bg-white rounded-full border-2 border-gray-700"
@@ -174,7 +174,7 @@
                 ];
                 $optionSkip = ['temp_image', 'postal_code', 'prefecture', 'city', 'address_line', 'phone', 'shipping_name', 'dog_profile_id'];
                 $displayValues = [
-                    'material'       => ['black' => '黒メタル（軍番タグ）', 'wood' => '木製（ウッドキーホルダー）'],
+                    'material'       => ['black' => '黒プラスチック（軍番タグ）', 'wood' => '木製（ウッドキーホルダー）'],
                     'engraving_type' => ['nose_print' => '鼻紋', 'silhouette' => 'シルエット'],
                 ];
             @endphp

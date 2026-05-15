@@ -94,7 +94,7 @@
                                          style="width:5px; height:5px; top:4px; left:50%; transform:translateX(-50%);"></div>
                                 </div>
                             </div>
-                            <div class="font-black text-sm transition" :class="material === 'black' ? 'text-white' : 'text-slate-900'">黒メタル</div>
+                            <div class="font-black text-sm transition" :class="material === 'black' ? 'text-white' : 'text-slate-900'">黒プラスチック</div>
                             <div class="text-xs text-slate-400 mt-1">軍番タグ</div>
                         </div>
                     </label>

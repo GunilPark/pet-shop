@@ -169,8 +169,9 @@
                             <div>
                                 <div class="font-bold text-slate-900">{{ $order->item->name }}</div>
                                 <div class="text-xs text-slate-400">
-                                    {{ $order->dogProfile->name }} ·
+                                    @if($order->dogProfile) {{ $order->dogProfile->name }} · @endif
                                     {{ $order->ordered_at->format('Y/m/d') }}
+                                    @if($order->is_consultation) · <span class="text-orange-400 font-bold">相談中</span> @endif
                                 </div>
                             </div>
                         </div>
@@ -206,7 +207,7 @@
                         <div>
                             <div class="font-bold text-slate-900">{{ $apply->event->title }}</div>
                             <div class="text-xs text-slate-400">
-                                {{ $apply->dogProfile->name }} ·
+                                @if($apply->dogProfile) {{ $apply->dogProfile->name }} · @endif
                                 {{ $apply->event->started_at->format('Y/m/d') }} ·
                                 申請日 {{ $apply->applied_at->format('Y/m/d') }}
                             </div>
