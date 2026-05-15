@@ -175,8 +175,9 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="flex flex-col items-end gap-1">
+                        <div class="flex flex-col items-end gap-2">
                             @php
+                                $cancelable = ['pending', 'reviewing', 'confirmed'];
                                 $statusMap = [
                                     'pending'    => ['bg-yellow-100', 'text-yellow-700', '受付中'],
                                     'reviewing'  => ['bg-yellow-100', 'text-yellow-700', '確認中'],
@@ -195,6 +196,16 @@
                             </span>
                             @if($order->is_consultation)
                                 <span class="text-xs font-bold px-3 py-1 rounded-full bg-orange-50 text-orange-500">相談あり</span>
+                            @endif
+                            @if(in_array($order->processing_status->value, $cancelable))
+                                <form method="POST" action="{{ route('mypage.order.cancel', $order) }}"
+                                      onsubmit="return confirm('注文をキャンセルしますか？この操作は取り消せません。')">
+                                    @csrf @method('DELETE')
+                                    <button type="submit"
+                                            class="text-xs text-red-400 hover:text-red-600 border border-red-200 hover:border-red-400 px-3 py-1 rounded-lg transition">
+                                        キャンセルする
+                                    </button>
+                                </form>
                             @endif
                         </div>
                     </div>

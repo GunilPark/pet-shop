@@ -207,8 +207,12 @@ class DogGoodsOrderResource extends Resource
                             'preview_sent_at'     => now(),
                         ]);
 
-                        Mail::to($record->user->email)
-                            ->send(new PreviewImageMail($record, $record->item, $consultation));
+                        try {
+                            Mail::to($record->user->email)
+                                ->send(new PreviewImageMail($record, $record->item, $consultation));
+                        } catch (\Throwable $e) {
+                            \Log::error('PreviewImageMail 送信失敗', ['order_id' => $record->id, 'error' => $e->getMessage()]);
+                        }
 
                         Notification::make()
                             ->title('プレビューメールを送信しました')
@@ -216,7 +220,29 @@ class DogGoodsOrderResource extends Resource
                             ->send();
                     }),
 
-                // ③ 発送する（注文確定・加工中のみ表示）
+                // ③ 入金確認済み（相談なし・注文確定のみ表示）
+                Tables\Actions\Action::make('confirmPayment')
+                    ->label('入金確認済み')
+                    ->icon('heroicon-o-banknotes')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->modalHeading('入金確認済みにしますか？')
+                    ->modalDescription('ステータスを「加工中」に変更し、入金済みとして記録します。')
+                    ->visible(fn (DogGoodsOrder $r) => ! $r->is_consultation && $r->processing_status === ProcessingStatus::Confirmed)
+                    ->action(function (DogGoodsOrder $record) {
+                        $record->update([
+                            'processing_status' => ProcessingStatus::Processing,
+                            'order_status'      => OrderStatus::Paid,
+                            'payment_status'    => PaymentStatus::Paid,
+                        ]);
+
+                        Notification::make()
+                            ->title('入金確認済みにしました')
+                            ->success()
+                            ->send();
+                    }),
+
+                // ④ 発送する（注文確定・加工中のみ表示）
                 Tables\Actions\Action::make('markShipped')
                     ->label('発送する')
                     ->icon('heroicon-o-truck')
@@ -258,6 +284,27 @@ class DogGoodsOrderResource extends Resource
                             ->send();
                     }),
 
+                // ⑥ キャンセル（配送前のみ）
+                Tables\Actions\Action::make('cancelOrder')
+                    ->label('キャンセル')
+                    ->icon('heroicon-o-x-circle')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->modalHeading('注文をキャンセルしますか？')
+                    ->modalDescription('この操作は取り消せません。')
+                    ->visible(fn (DogGoodsOrder $r) => ! in_array($r->processing_status, [ProcessingStatus::Shipping, ProcessingStatus::Delivered, ProcessingStatus::Completed, ProcessingStatus::Rejected]))
+                    ->action(function (DogGoodsOrder $record) {
+                        $record->update([
+                            'processing_status' => ProcessingStatus::Rejected,
+                            'order_status'      => OrderStatus::Canceled,
+                        ]);
+
+                        Notification::make()
+                            ->title('注文をキャンセルしました')
+                            ->danger()
+                            ->send();
+                    }),
+
                 // ⑤ 決済メール送信（相談注文のみ・支払済以外）
                 Tables\Actions\Action::make('sendPayment')
                     ->label('決済メール送信')
@@ -269,8 +316,12 @@ class DogGoodsOrderResource extends Resource
                     ->action(function (DogGoodsOrder $record) {
                         $token = $record->generatePaymentToken();
 
-                        Mail::to($record->user->email)
-                            ->send(new PaymentMail($record, $record->item));
+                        try {
+                            Mail::to($record->user->email)
+                                ->send(new PaymentMail($record, $record->item));
+                        } catch (\Throwable $e) {
+                            \Log::error('PaymentMail 送信失敗', ['order_id' => $record->id, 'error' => $e->getMessage()]);
+                        }
 
                         Notification::make()
                             ->title('決済メールを送信しました')

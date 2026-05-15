@@ -102,16 +102,41 @@ class GoodsOrderController extends Controller
         $adminEmail = config('mail.from.address');
 
         if ($isConsultation) {
-            // 管理者へ相談申請メール
-            Mail::to($adminEmail)->send(new ConsultationMail($order, $item));
+            try {
+                Mail::to($adminEmail)->send(new ConsultationMail($order, $item));
+            } catch (\Throwable $e) {
+                \Log::error('ConsultationMail 送信失敗', ['order_id' => $order->id, 'error' => $e->getMessage()]);
+            }
             return redirect()->route('mypage')->with('success', 'ご相談を受け付けました！注文も登録されました。担当者よりご連絡いたします。');
         }
 
-        // 管理者へ新規注文通知 + ユーザーへ受付完了メール
-        Mail::to($adminEmail)->send(new NewOrderAdminMail($order, $item));
-        Mail::to($order->user->email)->send(new NewOrderUserMail($order, $item));
+        try {
+            Mail::to($adminEmail)->send(new NewOrderAdminMail($order, $item));
+            Mail::to($order->user->email)->send(new NewOrderUserMail($order, $item));
+        } catch (\Throwable $e) {
+            \Log::error('NewOrderMail 送信失敗', ['order_id' => $order->id, 'error' => $e->getMessage()]);
+        }
 
         return redirect()->route('mypage')->with('success', 'ご注文が完了しました！受付完了メールをお送りしました。');
+    }
+
+    public function cancel(\App\Models\DogGoodsOrder $order)
+    {
+        abort_if($order->user_id !== auth()->id(), 403);
+
+        $cancelable = [
+            \App\Enums\ProcessingStatus::Pending,
+            \App\Enums\ProcessingStatus::Reviewing,
+            \App\Enums\ProcessingStatus::Confirmed,
+        ];
+        abort_if(! in_array($order->processing_status, $cancelable), 422);
+
+        $order->update([
+            'processing_status' => \App\Enums\ProcessingStatus::Rejected,
+            'order_status'      => \App\Enums\OrderStatus::Canceled,
+        ]);
+
+        return redirect()->route('mypage')->with('success', '注文をキャンセルしました。');
     }
 
     // ---- バリデーション ----
