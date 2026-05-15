@@ -151,38 +151,34 @@
                 <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">STEP 3 — 写真を撮影 / アップロード</p>
 
                 {{-- 撮影済みプレビュー --}}
-                <template x-if="capturedBase64 || previewUrl">
-                    <div class="mb-4 text-center">
-                        <div class="relative inline-block">
-                            <img :src="capturedBase64 || previewUrl"
-                                 class="max-h-56 mx-auto rounded-2xl object-cover shadow-lg border-4 border-orange-300">
-                            <button type="button" @click="resetPhoto"
-                                    class="absolute top-2 right-2 bg-white text-slate-600 rounded-full w-8 h-8 text-sm font-bold shadow hover:bg-red-50 hover:text-red-500 transition">✕</button>
-                        </div>
-                        <p class="text-xs text-green-600 font-bold mt-2">✅ 写真が選択されています</p>
+                <div x-show="capturedBase64 || previewUrl" class="mb-4 text-center">
+                    <div class="relative inline-block">
+                        <img :src="capturedBase64 || previewUrl"
+                             class="max-h-56 mx-auto rounded-2xl object-cover shadow-lg border-4 border-orange-300">
+                        <button type="button" @click="resetPhoto"
+                                class="absolute top-2 right-2 bg-white text-slate-600 rounded-full w-8 h-8 text-sm font-bold shadow hover:bg-red-50 hover:text-red-500 transition">✕</button>
                     </div>
-                </template>
+                    <p class="text-xs text-green-600 font-bold mt-2">✅ 写真が選択されています</p>
+                </div>
 
-                {{-- ボタン群 --}}
-                <template x-if="!capturedBase64 && !previewUrl">
-                    <div class="grid grid-cols-2 gap-3 mb-3">
-                        {{-- カメラ撮影ボタン --}}
-                        <button type="button" @click="openCamera"
-                                class="flex flex-col items-center justify-center gap-2 border-2 border-slate-200 rounded-2xl p-5 hover:border-orange-400 hover:bg-orange-50 transition">
-                            <span class="text-3xl">📸</span>
-                            <span class="font-bold text-sm text-slate-700">カメラで撮影</span>
-                            <span class="text-xs text-slate-400">ガイド枠に合わせて撮影</span>
-                        </button>
-                        {{-- ファイル選択 --}}
-                        <label class="flex flex-col items-center justify-center gap-2 border-2 border-slate-200 rounded-2xl p-5 hover:border-orange-400 hover:bg-orange-50 transition cursor-pointer">
-                            <span class="text-3xl">🖼️</span>
-                            <span class="font-bold text-sm text-slate-700">写真を選択</span>
-                            <span class="text-xs text-slate-400">アルバムから選ぶ</span>
-                            <input type="file" name="uploaded_image" accept="image/*"
-                                   class="hidden" @change="onFileChange($event)">
-                        </label>
-                    </div>
-                </template>
+                {{-- ボタン群（常にDOMに残す・previewUrl時は非表示） --}}
+                <div x-show="!capturedBase64 && !previewUrl" class="grid grid-cols-2 gap-3 mb-3">
+                    {{-- カメラ撮影ボタン --}}
+                    <button type="button" @click="openCamera"
+                            class="flex flex-col items-center justify-center gap-2 border-2 border-slate-200 rounded-2xl p-5 hover:border-orange-400 hover:bg-orange-50 transition">
+                        <span class="text-3xl">📸</span>
+                        <span class="font-bold text-sm text-slate-700">カメラで撮影</span>
+                        <span class="text-xs text-slate-400">ガイド枠に合わせて撮影</span>
+                    </button>
+                    {{-- ファイル選択（inputは常にDOM内に残す） --}}
+                    <label class="flex flex-col items-center justify-center gap-2 border-2 border-slate-200 rounded-2xl p-5 hover:border-orange-400 hover:bg-orange-50 transition cursor-pointer">
+                        <span class="text-3xl">🖼️</span>
+                        <span class="font-bold text-sm text-slate-700">写真を選択</span>
+                        <span class="text-xs text-slate-400">アルバムから選ぶ</span>
+                        <input type="file" name="uploaded_image" accept="image/*"
+                               class="hidden" @change="onFileChange($event)">
+                    </label>
+                </div>
 
                 @error('uploaded_image') <p class="text-red-500 text-sm mt-1">{{ $message }}</p> @enderror
                 @error('captured_image')  <p class="text-red-500 text-sm mt-1">{{ $message }}</p> @enderror
@@ -375,10 +371,10 @@ function nameTagForm() {
         },
 
         prepareSubmit(e) {
-            // 写真が何もない場合はブロック
             const hasFile    = document.querySelector('input[name=uploaded_image]')?.files?.length > 0;
             const hasCapture = this.capturedBase64 !== '';
-            if (!hasFile && !hasCapture) {
+            const hasPreview = this.previewUrl !== null;
+            if (!hasFile && !hasCapture && !hasPreview) {
                 e.preventDefault();
                 alert('写真を撮影するか、アルバムから選択してください。');
             }
