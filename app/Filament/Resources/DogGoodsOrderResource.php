@@ -126,12 +126,16 @@ class DogGoodsOrderResource extends Resource
             ->defaultSort('ordered_at', 'desc');
     }
 
+    public static function canCreate(): bool
+    {
+        return false;
+    }
+
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListDogGoodsOrders::route('/'),
-            'create' => Pages\CreateDogGoodsOrder::route('/create'),
-            'edit'   => Pages\EditDogGoodsOrder::route('/{record}/edit'),
+            'index' => Pages\ListDogGoodsOrders::route('/'),
+            'edit'  => Pages\EditDogGoodsOrder::route('/{record}/edit'),
         ];
     }
 }

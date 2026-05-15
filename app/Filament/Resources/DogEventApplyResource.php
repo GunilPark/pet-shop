@@ -95,12 +95,16 @@ class DogEventApplyResource extends Resource
             ->defaultSort('applied_at', 'desc');
     }
 
+    public static function canCreate(): bool
+    {
+        return false;
+    }
+
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListDogEventApplies::route('/'),
-            'create' => Pages\CreateDogEventApply::route('/create'),
-            'edit'   => Pages\EditDogEventApply::route('/{record}/edit'),
+            'index' => Pages\ListDogEventApplies::route('/'),
+            'edit'  => Pages\EditDogEventApply::route('/{record}/edit'),
         ];
     }
 }
