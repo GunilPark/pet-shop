@@ -405,7 +405,32 @@
 |------|------|
 | 決済連携（Stripe等） | 未実装（/payment/{token} ページのみ実装済み） |
 | AI API連携プレビュー生成 | 未実装（現在はPHP GDで近似処理） |
+| 一時ファイル自動クリーンアップ | 未実装（下記メモ参照） |
 | カレンダー・時計商品タイプ追加 | 未実装 |
 | 注文ステータス変更通知メール | 未実装 |
 | 多言語対応 | 未実装 |
 | 本番環境デプロイ設定 | 未実装 |
+
+### 一時ファイル自動クリーンアップ（タスクメモ）
+
+プレビュー確認画面に進むと `storage/app/public/orders/temp/eng_xxxxx.jpg` が生成される。
+注文完了時は `orders/uploaded/` に移動されるが、途中離脱した場合はファイルが残り続ける。
+
+**推奨実装方法：Artisanコマンド + スケジューラー**
+
+```bash
+php artisan make:command CleanTempImages
+```
+
+```php
+// app/Console/Commands/CleanTempImages.php
+// storage/app/public/orders/temp/ 以下の
+// 更新日時が24時間以上前のファイルを削除する
+```
+
+```php
+// app/Console/Kernel.php
+$schedule->command('app:clean-temp-images')->daily();
+```
+
+優先度：低（ストレージ圧迫は緩やか。本番デプロイ前までに対応推奨）
