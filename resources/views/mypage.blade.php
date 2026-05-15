@@ -180,17 +180,15 @@
                                 $statusMap = [
                                     'pending'    => ['bg-yellow-100', 'text-yellow-700', '受付中'],
                                     'reviewing'  => ['bg-yellow-100', 'text-yellow-700', '確認中'],
-                                    'confirmed'  => ['bg-green-50',   'text-green-600',  '注文確定'],
-                                    'processing' => ['bg-blue-50',    'text-blue-600',   '制作中'],
+                                    'confirmed'  => ['bg-blue-50',    'text-blue-600',   '注文確定'],
+                                    'processing' => ['bg-indigo-50',  'text-indigo-600', '制作中'],
                                     'shipping'   => ['bg-purple-50',  'text-purple-600', '配送中'],
+                                    'delivered'  => ['bg-green-100',  'text-green-700',  '配達完了 ✓'],
                                     'completed'  => ['bg-slate-100',  'text-slate-600',  '完了'],
                                     'rejected'   => ['bg-red-100',    'text-red-600',    'キャンセル'],
                                 ];
-                                $s = $statusMap[$order->processing_status->value] ?? ['bg-slate-100', 'text-slate-500', $order->processing_status->getLabel()];
-                                // 発送済み→配達完了
-                                if ($order->order_status->value === 'delivered') {
-                                    $s = ['bg-green-100', 'text-green-700', '配達完了'];
-                                }
+                                $s = $statusMap[$order->processing_status->value]
+                                    ?? ['bg-slate-100', 'text-slate-500', $order->processing_status->getLabel()];
                             @endphp
                             <span class="text-xs font-bold px-3 py-1 rounded-full {{ $s[0] }} {{ $s[1] }}">
                                 {{ $s[2] }}

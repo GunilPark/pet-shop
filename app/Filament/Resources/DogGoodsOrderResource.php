@@ -101,6 +101,13 @@ class DogGoodsOrderResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('id')
+                    ->label('#')
+                    ->sortable()
+                    ->width('60px'),
+
+                Tables\Columns\TextColumn::make('processing_status')
+                    ->label('進捗')
+                    ->badge()
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('user.name')
@@ -111,41 +118,49 @@ class DogGoodsOrderResource extends Resource
                     ->label('商品')
                     ->searchable(),
 
-                Tables\Columns\TextColumn::make('order_status')
-                    ->badge(),
-
-                Tables\Columns\TextColumn::make('processing_status')
-                    ->badge(),
-
-                Tables\Columns\TextColumn::make('consultation_status')
-                    ->label('相談')
-                    ->badge(),
-
-                Tables\Columns\TextColumn::make('payment_status')
-                    ->label('決済')
-                    ->badge(),
-
                 Tables\Columns\IconColumn::make('is_consultation')
                     ->label('相談')
                     ->boolean(),
 
+                Tables\Columns\TextColumn::make('consultation_status')
+                    ->label('相談状態')
+                    ->badge()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                Tables\Columns\TextColumn::make('payment_status')
+                    ->label('決済')
+                    ->badge()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
                 Tables\Columns\ImageColumn::make('processed_image')
-                    ->label('加工画像'),
+                    ->label('加工画像')
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 Tables\Columns\TextColumn::make('ordered_at')
+                    ->label('注文日時')
                     ->dateTime('Y/m/d H:i')
                     ->sortable(),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('order_status')
-                    ->options(OrderStatus::class),
-
                 Tables\Filters\SelectFilter::make('processing_status')
-                    ->options(ProcessingStatus::class),
+                    ->label('進捗ステータス')
+                    ->options(ProcessingStatus::class)
+                    ->multiple(),
+
+                Tables\Filters\SelectFilter::make('order_status')
+                    ->label('注文ステータス')
+                    ->options(OrderStatus::class)
+                    ->multiple(),
 
                 Tables\Filters\SelectFilter::make('payment_status')
-                    ->options(PaymentStatus::class),
+                    ->label('決済ステータス')
+                    ->options(PaymentStatus::class)
+                    ->multiple(),
+
+                Tables\Filters\TernaryFilter::make('is_consultation')
+                    ->label('相談あり'),
             ])
+            ->filtersLayout(Tables\Enums\FiltersLayout::AboveContent)
             ->actions([
                 Tables\Actions\EditAction::make(),
 
@@ -201,14 +216,14 @@ class DogGoodsOrderResource extends Resource
                             ->send();
                     }),
 
-                // ③ 発送済みにする（加工中のみ表示）
+                // ③ 発送する（注文確定・加工中のみ表示）
                 Tables\Actions\Action::make('markShipped')
-                    ->label('発送済みにする')
+                    ->label('発送する')
                     ->icon('heroicon-o-truck')
-                    ->color('success')
+                    ->color('info')
                     ->requiresConfirmation()
                     ->modalHeading('発送済みに変更しますか？')
-                    ->modalDescription('ステータスを「発送中」に変更します。お客様のマイページに反映されます。')
+                    ->modalDescription('ステータスを「配送中」に変更します。お客様のマイページに反映されます。')
                     ->visible(fn (DogGoodsOrder $r) => in_array($r->processing_status, [ProcessingStatus::Confirmed, ProcessingStatus::Processing]))
                     ->action(function (DogGoodsOrder $record) {
                         $record->update([
@@ -222,7 +237,28 @@ class DogGoodsOrderResource extends Resource
                             ->send();
                     }),
 
-                // ④ 決済メール送信（相談注文のみ・支払済以外）
+                // ④ 配達完了にする（配送中のみ表示）
+                Tables\Actions\Action::make('markDelivered')
+                    ->label('配達完了にする')
+                    ->icon('heroicon-o-check-badge')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->modalHeading('配達完了に変更しますか？')
+                    ->modalDescription('ステータスを「配達完了」に変更します。お客様のマイページに反映されます。')
+                    ->visible(fn (DogGoodsOrder $r) => $r->processing_status === ProcessingStatus::Shipping)
+                    ->action(function (DogGoodsOrder $record) {
+                        $record->update([
+                            'processing_status' => ProcessingStatus::Delivered,
+                            'order_status'      => OrderStatus::Delivered,
+                        ]);
+
+                        Notification::make()
+                            ->title('配達完了に更新しました')
+                            ->success()
+                            ->send();
+                    }),
+
+                // ⑤ 決済メール送信（相談注文のみ・支払済以外）
                 Tables\Actions\Action::make('sendPayment')
                     ->label('決済メール送信')
                     ->icon('heroicon-o-credit-card')
@@ -242,6 +278,7 @@ class DogGoodsOrderResource extends Resource
                             ->send();
                     }),
             ])
+            ->defaultSort('processing_status', 'asc')
             ->defaultSort('ordered_at', 'desc');
     }
 
