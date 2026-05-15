@@ -68,6 +68,7 @@ class DogGoodsItemResource extends Resource
                     ->label('サムネイル画像（一覧表示用・メイン）')
                     ->image()
                     ->imageEditor()
+                    ->disk('public')
                     ->directory('items')
                     ->columnSpanFull(),
 
@@ -75,6 +76,7 @@ class DogGoodsItemResource extends Resource
                     ->label('商品画像（複数枚・詳細ページに表示）')
                     ->image()
                     ->imageEditor()
+                    ->disk('public')
                     ->multiple()
                     ->reorderable()
                     ->appendFiles()
