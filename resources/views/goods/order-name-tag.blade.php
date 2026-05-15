@@ -85,7 +85,7 @@
                 <div class="grid grid-cols-2 gap-4">
                     <label class="cursor-pointer">
                         <input type="radio" name="material" value="black" class="sr-only peer"
-                               x-model="material" {{ old('material', 'black') === 'black' ? 'checked' : '' }}>
+                               x-model="material" {{ old('material', $saved['material'] ?? 'black') === 'black' ? 'checked' : '' }}>
                         <div class="border-2 border-slate-200 peer-checked:border-slate-900 peer-checked:bg-slate-900 rounded-2xl p-5 text-center transition">
                             <div class="mx-auto mb-3 flex justify-center">
                                 <div class="relative bg-gray-900 border-2 border-gray-700"
@@ -100,7 +100,7 @@
                     </label>
                     <label class="cursor-pointer">
                         <input type="radio" name="material" value="wood" class="sr-only peer"
-                               x-model="material" {{ old('material') === 'wood' ? 'checked' : '' }}>
+                               x-model="material" {{ old('material', $saved['material'] ?? 'black') === 'wood' ? 'checked' : '' }}>
                         <div class="border-2 border-slate-200 peer-checked:border-amber-700 peer-checked:bg-amber-50 rounded-2xl p-5 text-center transition">
                             <div class="mx-auto mb-3 flex justify-center">
                                 <div class="relative shadow"
@@ -126,7 +126,7 @@
                 <div class="grid grid-cols-2 gap-4">
                     <label class="cursor-pointer">
                         <input type="radio" name="engraving_type" value="nose_print" class="sr-only peer"
-                               x-model="engravingType" {{ old('engraving_type', 'nose_print') === 'nose_print' ? 'checked' : '' }}>
+                               x-model="engravingType" {{ old('engraving_type', $saved['engraving_type'] ?? 'nose_print') === 'nose_print' ? 'checked' : '' }}>
                         <div class="border-2 border-slate-200 peer-checked:border-orange-500 peer-checked:bg-orange-50 rounded-2xl p-5 text-center transition">
                             <div class="text-3xl mb-2">🐽</div>
                             <div class="font-black text-sm text-slate-900">鼻紋</div>
@@ -135,7 +135,7 @@
                     </label>
                     <label class="cursor-pointer">
                         <input type="radio" name="engraving_type" value="silhouette" class="sr-only peer"
-                               x-model="engravingType" {{ old('engraving_type') === 'silhouette' ? 'checked' : '' }}>
+                               x-model="engravingType" {{ old('engraving_type', $saved['engraving_type'] ?? 'nose_print') === 'silhouette' ? 'checked' : '' }}>
                         <div class="border-2 border-slate-200 peer-checked:border-orange-500 peer-checked:bg-orange-50 rounded-2xl p-5 text-center transition">
                             <div class="text-3xl mb-2">🐕</div>
                             <div class="font-black text-sm text-slate-900">シルエット</div>
@@ -190,7 +190,7 @@
                 <div class="space-y-4">
                     <div>
                         <label class="block text-xs font-bold text-slate-500 mb-1">名前（表面・裏面に入ります） <span class="text-red-500">*</span></label>
-                        <input type="text" name="name" value="{{ old('name') }}" required maxlength="50"
+                        <input type="text" name="name" value="{{ old('name', $saved['name'] ?? '') }}" required maxlength="50"
                                placeholder="例：MOCHI"
                                class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 uppercase">
                         <p class="text-xs text-slate-400 mt-1">アルファベット推奨（大文字で刻印）</p>
@@ -198,13 +198,13 @@
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-500 mb-1">犬種</label>
-                        <input type="text" name="breed" value="{{ old('breed') }}" maxlength="50"
+                        <input type="text" name="breed" value="{{ old('breed', $saved['breed'] ?? '') }}" maxlength="50"
                                placeholder="例：ブルドッグ"
                                class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300">
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-500 mb-1">誕生日</label>
-                        <input type="text" name="birthday" value="{{ old('birthday') }}" maxlength="20"
+                        <input type="text" name="birthday" value="{{ old('birthday', $saved['birthday'] ?? '') }}" maxlength="20"
                                placeholder="例：2020.05.03"
                                class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300">
                     </div>
@@ -212,7 +212,7 @@
                         <label class="block text-xs font-bold text-slate-500 mb-1">裏面メッセージ（100文字以内）</label>
                         <textarea name="message" maxlength="100" rows="2"
                                   placeholder="例：大好きだよ"
-                                  class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300">{{ old('message') }}</textarea>
+                                  class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300">{{ old('message', $saved['message'] ?? '') }}</textarea>
                     </div>
                 </div>
             </div>
@@ -292,8 +292,8 @@
 <script>
 function nameTagForm() {
     return {
-        material:       '{{ old('material', 'black') }}',
-        engravingType:  '{{ old('engraving_type', 'nose_print') }}',
+        material:       '{{ old('material', $saved['material'] ?? 'black') }}',
+        engravingType:  '{{ old('engraving_type', $saved['engraving_type'] ?? 'nose_print') }}',
         previewUrl:     null,
         capturedBase64: '',
         cameraOpen:     false,

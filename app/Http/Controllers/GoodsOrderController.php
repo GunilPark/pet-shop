@@ -13,13 +13,16 @@ use Illuminate\Support\Facades\Storage;
 
 class GoodsOrderController extends Controller
 {
-    public function create(DogGoodsItem $item)
+    public function create(DogGoodsItem $item, Request $request)
     {
         abort_if(! $item->is_active, 404);
 
+        // プレビューから「修正する」で戻ったときにセッションの入力内容を復元
+        $saved = $request->session()->get('order_preview', []);
+
         return match($item->product_type) {
-            ProductType::NameTag => view('goods.order-name-tag', compact('item')),
-            default              => view('goods.order-basic', compact('item')),
+            ProductType::NameTag => view('goods.order-name-tag', compact('item', 'saved')),
+            default              => view('goods.order-basic', compact('item', 'saved')),
         };
     }
 
