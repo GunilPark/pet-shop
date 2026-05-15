@@ -58,7 +58,7 @@
                                         repeating-linear-gradient(90deg, transparent, transparent 3px, rgba(150,100,50,0.08) 3px, rgba(150,100,50,0.08) 4px),
                                         linear-gradient(160deg, #e8c9a0 0%, #d4a96a 40%, #c49a5a 70%, #b8874a 100%);">
                             @if($imgUrl)
-                                <div class="w-full" style="height:90px; filter: grayscale(100%) contrast(160%) sepia(20%); opacity:0.85;">
+                                <div class="w-full" style="height:90px;">
                                     <img src="{{ $imgUrl }}" class="w-full h-full object-cover object-top">
                                 </div>
                             @else
@@ -78,8 +78,7 @@
                                  style="width:10px; height:10px; top:8px; left:50%; transform:translateX(-50%);"></div>
                             <div class="flex flex-col items-center justify-center w-full h-full px-3 pt-5 pb-3">
                                 @if($imgUrl)
-                                    <div class="w-full flex-1 overflow-hidden rounded-sm mb-1"
-                                         style="filter: grayscale(100%) contrast(200%) brightness(1.1);">
+                                    <div class="w-full flex-1 overflow-hidden rounded-sm mb-1">
                                         <img src="{{ $imgUrl }}" class="w-full h-full object-cover">
                                     </div>
                                 @else

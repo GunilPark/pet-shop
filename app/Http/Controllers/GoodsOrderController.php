@@ -13,8 +13,6 @@ use Illuminate\Support\Facades\Storage;
 
 class GoodsOrderController extends Controller
 {
-    // ---- フォーム表示 ----
-
     public function create(DogGoodsItem $item)
     {
         abort_if(! $item->is_active, 404);
@@ -25,8 +23,6 @@ class GoodsOrderController extends Controller
         };
     }
 
-    // ---- 確認画面（セッションに保存して表示）----
-
     public function preview(Request $request, DogGoodsItem $item)
     {
         abort_if(! $item->is_active, 404);
@@ -36,20 +32,29 @@ class GoodsOrderController extends Controller
             default              => $this->validateBasic($request),
         };
 
-        // 画像をアップロード＋エングレービング風に加工
+        $engravingType = $data['engraving_type'] ?? 'silhouette';
+
         if ($request->hasFile('uploaded_image')) {
-            $data['temp_image'] = $this->processAndStore($request->file('uploaded_image'));
+            // ファイルアップロード
+            $data['temp_image'] = $this->processImage(
+                $this->gdFromUpload($request->file('uploaded_image')),
+                $engravingType
+            );
+        } elseif (! empty($data['captured_image'])) {
+            // カメラキャプチャ（base64）
+            // フロント側で既にマスク適用済みなのでエングレービング処理のみ
+            $gdImg = $this->gdFromBase64($data['captured_image']);
+            if ($gdImg) {
+                $data['temp_image'] = $this->processImage($gdImg, $engravingType, masked: true);
+            }
         }
 
-        // UploadedFile オブジェクトはセッションに入れない
-        unset($data['uploaded_image']);
+        unset($data['uploaded_image'], $data['captured_image']);
 
         $request->session()->put('order_preview', $data);
 
         return view('goods.order-preview', compact('item', 'data'));
     }
-
-    // ---- 注文確定 or 相談申請 ----
 
     public function store(Request $request, DogGoodsItem $item)
     {
@@ -98,60 +103,150 @@ class GoodsOrderController extends Controller
 
     private function validateNameTag(Request $request): array
     {
-        return $request->validate([
-            'material'       => ['required', 'in:black,wood'],
-            'engraving_type' => ['required', 'in:nose_print,silhouette'],
-            'uploaded_image' => ['required', 'image', 'max:10240'],
-            'name'           => ['required', 'string', 'max:50'],
-            'breed'          => ['nullable', 'string', 'max:50'],
-            'birthday'       => ['nullable', 'string', 'max:20'],
-            'message'        => ['nullable', 'string', 'max:100'],
+        $request->validate([
+            'material'        => ['required', 'in:black,wood'],
+            'engraving_type'  => ['required', 'in:nose_print,silhouette'],
+            'uploaded_image'  => ['nullable', 'image', 'max:10240'],
+            'captured_image'  => ['nullable', 'string'],
+            'name'            => ['required', 'string', 'max:50'],
+            'breed'           => ['nullable', 'string', 'max:50'],
+            'birthday'        => ['nullable', 'string', 'max:20'],
+            'message'         => ['nullable', 'string', 'max:100'],
         ]);
+
+        // 写真は uploaded_image か captured_image のどちらか必須
+        if (! $request->hasFile('uploaded_image') && empty($request->input('captured_image'))) {
+            return back()->withErrors(['uploaded_image' => '写真を撮影またはアップロードしてください。'])->withInput()->throwResponse();
+        }
+
+        return $request->only(['material', 'engraving_type', 'uploaded_image', 'captured_image', 'name', 'breed', 'birthday', 'message']);
     }
 
-    // ---- 画像処理：エングレービング風に変換 ----
+    // ---- 画像ロード ----
 
-    private function processAndStore(UploadedFile $file): string
+    private function gdFromUpload(UploadedFile $file): \GdImage|false
     {
         $mime = $file->getMimeType();
-
-        $src = match(true) {
+        return match(true) {
             str_contains($mime, 'png')  => imagecreatefrompng($file->getRealPath()),
             str_contains($mime, 'webp') => imagecreatefromwebp($file->getRealPath()),
             default                     => imagecreatefromjpeg($file->getRealPath()),
         };
+    }
 
+    private function gdFromBase64(string $base64): \GdImage|false
+    {
+        // "data:image/jpeg;base64,..." 形式から純粋なデータを取り出す
+        if (str_contains($base64, ',')) {
+            $base64 = explode(',', $base64, 2)[1];
+        }
+        $binary = base64_decode($base64);
+        if (! $binary) return false;
+        return imagecreatefromstring($binary);
+    }
+
+    // ---- 画像処理：マスク適用 → エングレービング変換 ----
+
+    private function processImage(\GdImage|false $src, string $engravingType, bool $masked = false): string
+    {
         if (! $src) {
-            // 加工失敗時はそのまま保存
-            return $file->store('orders/temp', 'public');
+            return '';
         }
 
         $w = imagesx($src);
         $h = imagesy($src);
 
-        // グレースケール変換
-        imagefilter($src, IMG_FILTER_GRAYSCALE);
-
-        // コントラスト強調（-100〜100、マイナスほど強）
-        imagefilter($src, IMG_FILTER_CONTRAST, -60);
-
-        // 明度を少し上げる
-        imagefilter($src, IMG_FILTER_BRIGHTNESS, 15);
-
-        // スムーズ
-        imagefilter($src, IMG_FILTER_SMOOTH, 2);
-
-        $dir  = storage_path('app/public/orders/temp');
-        if (! is_dir($dir)) {
-            mkdir($dir, 0755, true);
+        // リサイズ（最大800px で高速化）
+        $maxSize = 800;
+        if ($w > $maxSize || $h > $maxSize) {
+            $ratio   = min($maxSize / $w, $maxSize / $h);
+            $nw      = (int) ($w * $ratio);
+            $nh      = (int) ($h * $ratio);
+            $resized = imagecreatetruecolor($nw, $nh);
+            imagecopyresampled($resized, $src, 0, 0, 0, 0, $nw, $nh, $w, $h);
+            imagedestroy($src);
+            $src = $resized;
+            $w = $nw;
+            $h = $nh;
         }
 
+        // サーバー側マスク適用（ファイルアップロード時のみ、カメラはフロント適用済み）
+        if (! $masked) {
+            $src = $this->applyGuideMask($src, $w, $h, $engravingType);
+        }
+
+        // グレースケール
+        imagefilter($src, IMG_FILTER_GRAYSCALE);
+
+        // コントラスト強調
+        imagefilter($src, IMG_FILTER_CONTRAST, -70);
+
+        // 色反転（黒い被写体 → 白い刻印）
+        imagefilter($src, IMG_FILTER_NEGATE);
+
+        // 暗すぎるピクセル（元・明るい背景）を純黒に
+        $threshold = $engravingType === 'nose_print' ? 55 : 45;
+        for ($y = 0; $y < $h; $y++) {
+            for ($x = 0; $x < $w; $x++) {
+                $rgb = imagecolorat($src, $x, $y);
+                if ((($rgb >> 16) & 0xFF) < $threshold) {
+                    imagesetpixel($src, $x, $y, 0x000000);
+                }
+            }
+        }
+
+        imagefilter($src, IMG_FILTER_SMOOTH, 1);
+
+        $dir = storage_path('app/public/orders/temp');
+        if (! is_dir($dir)) mkdir($dir, 0755, true);
+
         $filename = uniqid('eng_') . '.jpg';
-        $fullPath = $dir . '/' . $filename;
-        imagejpeg($src, $fullPath, 90);
+        imagejpeg($src, $dir . '/' . $filename, 90);
         imagedestroy($src);
 
         return 'orders/temp/' . $filename;
+    }
+
+    // ---- ガイド枠マスク（枠外を黒塗り） ----
+    // フロントのSVG座標（鼻: cx=50% cy=50% rx=35% ry=28% / シルエット: x=10% y=15% w=80% h=70%）と一致
+
+    private function applyGuideMask(\GdImage $src, int $w, int $h, string $engravingType): \GdImage
+    {
+        $black = imagecolorallocate($src, 0, 0, 0);
+
+        if ($engravingType === 'nose_print') {
+            $cx = (int) ($w * 0.50);
+            $cy = (int) ($h * 0.50);
+            $rx = (int) ($w * 0.35);
+            $ry = (int) ($h * 0.28);
+
+            for ($y = 0; $y < $h; $y++) {
+                for ($x = 0; $x < $w; $x++) {
+                    $dx = ($x - $cx) / $rx;
+                    $dy = ($y - $cy) / $ry;
+                    if (($dx * $dx + $dy * $dy) > 1.0) {
+                        imagesetpixel($src, $x, $y, $black);
+                    }
+                }
+            }
+        } else {
+            // シルエット：長方形マスク
+            $mx = (int) ($w * 0.10);
+            $my = (int) ($h * 0.15);
+            $mw = (int) ($w * 0.80);
+            $mh = (int) ($h * 0.70);
+
+            // 上
+            imagefilledrectangle($src, 0, 0, $w - 1, $my - 1, $black);
+            // 下
+            imagefilledrectangle($src, 0, $my + $mh, $w - 1, $h - 1, $black);
+            // 左
+            imagefilledrectangle($src, 0, $my, $mx - 1, $my + $mh - 1, $black);
+            // 右
+            imagefilledrectangle($src, $mx + $mw, $my, $w - 1, $my + $mh - 1, $black);
+        }
+
+        return $src;
     }
 
     // ---- メール送信 ----
