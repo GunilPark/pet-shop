@@ -223,10 +223,9 @@
             </button>
         </form>
     </div>
-</div>
 
-{{-- ===== カメラモーダル ===== --}}
-<div x-show="cameraOpen" x-cloak
+    {{-- ===== カメラモーダル（x-dataスコープ内に配置） ===== --}}
+    <div x-show="cameraOpen" x-cloak
      class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black"
      style="display:none;">
 
@@ -247,31 +246,41 @@
         {{-- ガイドオーバーレイ (SVG) --}}
         <svg class="absolute inset-0 w-full h-full pointer-events-none" xmlns="http://www.w3.org/2000/svg">
             <defs>
-                <mask id="guide-mask">
+                {{-- 鼻紋用マスク --}}
+                <mask id="mask-nose">
                     <rect width="100%" height="100%" fill="white"/>
-                    {{-- 鼻紋：楕円 --}}
-                    <template x-if="engravingType === 'nose_print'">
-                        <ellipse cx="50%" cy="50%" rx="35%" ry="28%" fill="black"/>
-                    </template>
-                    {{-- シルエット：長方形 --}}
-                    <template x-if="engravingType === 'silhouette'">
-                        <rect x="10%" y="15%" width="80%" height="70%" rx="16" fill="black"/>
-                    </template>
+                    <ellipse cx="50%" cy="50%" rx="35%" ry="28%" fill="black"/>
+                </mask>
+                {{-- シルエット用マスク --}}
+                <mask id="mask-sil">
+                    <rect width="100%" height="100%" fill="white"/>
+                    <rect x="10%" y="15%" width="80%" height="70%" rx="16" fill="black"/>
                 </mask>
             </defs>
-            {{-- 枠外を半透明黒でマスク --}}
-            <rect width="100%" height="100%" fill="rgba(0,0,0,0.55)" mask="url(#guide-mask)"/>
-            {{-- ガイド枠線 --}}
-            <template x-if="engravingType === 'nose_print'">
-                <ellipse cx="50%" cy="50%" rx="35%" ry="28%"
-                         fill="none" stroke="rgba(255,165,0,0.9)" stroke-width="2.5"
-                         stroke-dasharray="8 4"/>
-            </template>
-            <template x-if="engravingType === 'silhouette'">
-                <rect x="10%" y="15%" width="80%" height="70%" rx="16"
-                      fill="none" stroke="rgba(255,165,0,0.9)" stroke-width="2.5"
-                      stroke-dasharray="8 4"/>
-            </template>
+
+            {{-- 枠外暗転 --}}
+            <rect x-show="engravingType === 'nose_print'"
+                  width="100%" height="100%" fill="rgba(0,0,0,0.6)" mask="url(#mask-nose)"/>
+            <rect x-show="engravingType === 'silhouette'"
+                  width="100%" height="100%" fill="rgba(0,0,0,0.6)" mask="url(#mask-sil)"/>
+
+            {{-- 鼻紋：楕円ガイド枠 --}}
+            <ellipse x-show="engravingType === 'nose_print'"
+                     cx="50%" cy="50%" rx="35%" ry="28%"
+                     fill="none" stroke="#ff6600" stroke-width="3"
+                     stroke-dasharray="10 5"/>
+
+            {{-- シルエット：長方形ガイド枠 --}}
+            <rect x-show="engravingType === 'silhouette'"
+                  x="10%" y="15%" width="80%" height="70%" rx="16"
+                  fill="none" stroke="#ff6600" stroke-width="3"
+                  stroke-dasharray="10 5"/>
+
+            {{-- 中央十字線（位置合わせ用） --}}
+            <line x-show="engravingType === 'nose_print'"
+                  x1="50%" y1="42%" x2="50%" y2="58%" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
+            <line x-show="engravingType === 'nose_print'"
+                  x1="42%" y1="50%" x2="58%" y2="50%" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
         </svg>
 
         {{-- 隠しcanvas --}}
@@ -285,6 +294,7 @@
             <div class="w-14 h-14 rounded-full bg-orange-400"></div>
         </button>
     </div>
+</div>
 </div>
 
 <style>[x-cloak]{display:none!important}</style>
@@ -300,16 +310,31 @@ function nameTagForm() {
         stream:         null,
 
         openCamera() {
+            // mediaDevices が使えない環境（HTTP等）はファイル選択にフォールバック
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                alert('このブラウザ環境ではカメラが使用できません。\n写真を選択してください。');
+                return;
+            }
             this.cameraOpen = true;
             this.$nextTick(() => {
-                navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 960 } }
-                }).then(s => {
+                // まずシンプルな制約で試みる
+                navigator.mediaDevices.getUserMedia({ video: true })
+                .then(s => {
                     this.stream = s;
-                    this.$refs.video.srcObject = s;
-                }).catch(() => {
-                    alert('カメラへのアクセスが許可されていません。\n設定でカメラを許可するか、写真を選択してください。');
+                    const video = this.$refs.video;
+                    if (!video) { console.error('video ref not found'); return; }
+                    video.srcObject = s;
+                    video.onloadedmetadata = () => {
+                        video.play().catch(e => console.error('play failed:', e));
+                    };
+                }).catch(err => {
+                    console.error('getUserMedia error:', err.name, err.message);
                     this.cameraOpen = false;
+                    if (err.name === 'NotAllowedError') {
+                        alert('カメラへのアクセスが拒否されました。\nブラウザの設定でカメラを許可してください。');
+                    } else {
+                        alert('カメラを起動できませんでした（' + err.name + '）。\n写真を選択してください。');
+                    }
                 });
             });
         },
