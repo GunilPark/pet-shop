@@ -5,7 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title>@yield('title', config('app.name', 'GUNIL PET SHOP'))</title>
+        <title>@yield('title', config('app.name', 'INU GOODS'))</title>
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
@@ -22,7 +22,7 @@
         <nav class="bg-white border-b border-slate-100 sticky top-0 z-50">
             <div class="container mx-auto px-6 h-16 flex items-center justify-between">
                 <a href="/" class="text-xl font-black text-slate-900 hover:text-orange-500 transition">
-                    🐶 GUNIL PET SHOP
+                    🐶 INU GOODS
                 </a>
                 <div class="flex items-center gap-6 text-sm font-bold">
                     <a href="/goods" class="text-slate-600 hover:text-orange-500 transition">グッズ</a>
@@ -49,7 +49,7 @@
         {{-- フッター --}}
         <footer class="bg-slate-900 text-slate-400 py-10 mt-16">
             <div class="container mx-auto px-6 text-center text-sm">
-                <p class="font-black text-white text-lg mb-2">🐶 GUNIL PET SHOP</p>
+                <p class="font-black text-white text-lg mb-2">🐶 INU GOODS</p>
                 <p>© {{ date('Y') }} Gunil Pet Shop. All rights reserved.</p>
             </div>
         </footer>

@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'ネームタグ 注文 | GUNIL PET SHOP')
+@section('title', 'ネームタグ 注文 | INU GOODS')
 @section('content')
 <div class="container mx-auto px-6 py-16 max-w-xl" x-data="nameTagForm()">
 

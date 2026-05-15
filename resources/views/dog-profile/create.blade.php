@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', '犬プロフィール登録 | GUNIL PET SHOP')
+@section('title', '犬プロフィール登録 | INU GOODS')
 
 @section('content')
 <div class="container mx-auto px-6 py-16 max-w-xl">

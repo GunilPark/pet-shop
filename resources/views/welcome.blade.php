@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'TOP | GUNIL PET SHOP')
+@section('title', 'TOP | INU GOODS')
 
 @section('content')
     {{-- Hero --}}

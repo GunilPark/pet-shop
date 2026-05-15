@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'マイページ | GUNIL PET SHOP')
+@section('title', 'マイページ | INU GOODS')
 
 @section('content')
 <div class="container mx-auto px-6 py-16 max-w-4xl">

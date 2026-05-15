@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\OrderStatus;
+use App\Enums\PaymentStatus;
 use App\Enums\ProcessingStatus;
 use App\Enums\ProductType;
 use App\Mail\ConsultationMail;
@@ -89,6 +90,7 @@ class GoodsOrderController extends Controller
             'item_id'           => $item->id,
             'order_status'      => OrderStatus::Pending,
             'processing_status' => $isConsultation ? ProcessingStatus::Reviewing : ProcessingStatus::Confirmed,
+            'payment_status'    => PaymentStatus::Unsent,
             'uploaded_image'    => $uploadedImage,
             'custom_options'    => $data,
             'is_consultation'   => $isConsultation,

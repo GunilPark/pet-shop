@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', '犬RUNイベント | GUNIL PET SHOP')
+@section('title', '犬RUNイベント | INU GOODS')
 
 @section('content')
     <div class="bg-orange-50 border-b border-orange-100 py-20">
