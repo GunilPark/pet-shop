@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DogProfileController;
 use App\Http\Controllers\EventApplyController;
@@ -60,5 +61,9 @@ Route::middleware('auth')->group(function () {
     Route::patch('/dog-profile/{dogProfile}', [DogProfileController::class, 'update'])->name('dog-profile.update');
     Route::delete('/dog-profile/{dogProfile}', [DogProfileController::class, 'destroy'])->name('dog-profile.destroy');
 });
+
+// 決済（トークン認証・ログイン不要）
+Route::get('/payment/{token}', [PaymentController::class, 'show'])->name('payment.show');
+Route::post('/payment/{token}/complete', [PaymentController::class, 'complete'])->name('payment.complete');
 
 require __DIR__.'/auth.php';

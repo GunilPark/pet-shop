@@ -6,8 +6,11 @@ use App\Enums\OrderStatus;
 use App\Enums\ProcessingStatus;
 use App\Enums\ProductType;
 use App\Mail\ConsultationMail;
+use App\Mail\NewOrderAdminMail;
+use App\Mail\NewOrderUserMail;
 use App\Models\DogGoodsItem;
 use App\Models\DogGoodsOrder;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -94,12 +97,19 @@ class GoodsOrderController extends Controller
 
         $request->session()->forget('order_preview');
 
+        $adminEmail = config('mail.from.address');
+
         if ($isConsultation) {
-            $this->sendConsultationMail($order, $item);
+            // 管理者へ相談申請メール
+            Mail::to($adminEmail)->send(new ConsultationMail($order, $item));
             return redirect()->route('mypage')->with('success', 'ご相談を受け付けました！注文も登録されました。担当者よりご連絡いたします。');
         }
 
-        return redirect()->route('mypage')->with('success', 'ご注文が完了しました！管理者確認後、加工を開始します。');
+        // 管理者へ新規注文通知 + ユーザーへ受付完了メール
+        Mail::to($adminEmail)->send(new NewOrderAdminMail($order, $item));
+        Mail::to($order->user->email)->send(new NewOrderUserMail($order, $item));
+
+        return redirect()->route('mypage')->with('success', 'ご注文が完了しました！受付完了メールをお送りしました。');
     }
 
     // ---- バリデーション ----
@@ -272,13 +282,4 @@ class GoodsOrderController extends Controller
         return $src;
     }
 
-    // ---- メール送信 ----
-
-    private function sendConsultationMail(DogGoodsOrder $order, DogGoodsItem $item): void
-    {
-        $adminEmail = config('mail.from.address', 'admin@example.com');
-
-        \Illuminate\Support\Facades\Mail::to($adminEmail)
-            ->send(new ConsultationMail($order, $item));
-    }
 }

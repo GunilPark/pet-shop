@@ -11,25 +11,25 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class ConsultationMail extends Mailable
+class PreviewImageMail extends Mailable
 {
     use Queueable, SerializesModels;
 
     public function __construct(
-        public readonly DogGoodsOrder             $order,
-        public readonly DogGoodsItem              $item,
-        public readonly ?DogGoodsConsultation     $consultation = null,
+        public readonly DogGoodsOrder        $order,
+        public readonly DogGoodsItem         $item,
+        public readonly DogGoodsConsultation $consultation,
     ) {}
 
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: "【{$this->item->name}相談申請】ご注文受付のお知らせ（注文番号 #{$this->order->id}）",
+            subject: "【加工プレビューのご確認】{$this->item->name}（注文番号 #{$this->order->id}）",
         );
     }
 
     public function content(): Content
     {
-        return new Content(view: 'emails.consultation');
+        return new Content(view: 'emails.preview-image');
     }
 }

@@ -1,21 +1,13 @@
 @extends('emails.layouts.base')
-@section('title', '相談申請受付 #' . $order->id)
+@section('title', '新規注文通知 #' . $order->id)
 @section('body')
-<span class="badge">CONSULTATION REQUEST</span>
+<span class="badge">NEW ORDER</span>
 <div class="greeting">
-  INU GOODS 管理者様<br><br>
-  {{ $item->name }}に関する相談申請が届きました。<br>
-  内容をご確認の上、対応をお願いいたします。
+  新規注文が入りました。<br>
+  管理画面よりご確認の上、対応をお願いいたします。
 </div>
 
 @include('emails.partials.order-info')
-
-@if(isset($consultation) && $consultation->message)
-<div class="section">
-  <div class="section-title">Message ／ ご相談内容</div>
-  <div class="highlight-box">{{ $consultation->message }}</div>
-</div>
-@endif
 
 @if($order->uploaded_image)
 <div class="section">
@@ -26,9 +18,16 @@
 </div>
 @endif
 
+@if($order->admin_memo)
+<div class="section">
+  <div class="section-title">Memo ／ 管理メモ</div>
+  <div class="highlight-box">{{ $order->admin_memo }}</div>
+</div>
+@endif
+
 <div style="text-align:center; margin-top:32px;">
   <a href="{{ config('app.url') }}/admin/dog-goods-orders/{{ $order->id }}/edit" class="btn btn-dark">
-    管理画面で確認・返信する →
+    管理画面で確認する →
   </a>
 </div>
 @endsection
