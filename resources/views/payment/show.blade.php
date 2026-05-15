@@ -42,11 +42,11 @@
     <div class="bg-white rounded-[28px] border border-slate-100 shadow-sm p-6 mb-6">
         <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">配送先</p>
         <div class="text-sm text-slate-700 space-y-1">
-            <p class="font-bold">{{ $opts['shipping_name'] ?? '' }}</p>
-            @php $postal = preg_replace('/^(\d{3})(\d{4})$/', '$1-$2', preg_replace('/[^0-9]/', '', $opts['postal_code'] ?? '')); @endphp
+            <p class="font-bold">{{ $order->shipping_name ?? '' }}</p>
+            @php $postal = preg_replace('/^(\d{3})(\d{4})$/', '$1-$2', preg_replace('/[^0-9]/', '', $order->postal_code ?? '')); @endphp
             <p>〒{{ $postal }}</p>
-            <p>{{ ($opts['prefecture'] ?? '') . ($opts['city'] ?? '') }} {{ $opts['address_line'] ?? '' }}</p>
-            <p class="text-slate-400">📞 {{ $opts['phone'] ?? '' }}</p>
+            <p>{{ ($order->prefecture ?? '') . ($order->city ?? '') }} {{ $order->address_line ?? '' }}</p>
+            <p class="text-slate-400">📞 {{ $order->phone ?? '' }}</p>
         </div>
     </div>
 

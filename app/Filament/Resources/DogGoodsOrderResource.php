@@ -48,6 +48,12 @@ class DogGoodsOrderResource extends Resource
                     ->searchable()
                     ->required(),
 
+                Forms\Components\TextInput::make('quantity')
+                    ->label('数量')
+                    ->numeric()
+                    ->default(1)
+                    ->minValue(1),
+
                 Forms\Components\Select::make('order_status')
                     ->options(OrderStatus::class)
                     ->required(),
@@ -55,6 +61,22 @@ class DogGoodsOrderResource extends Resource
                 Forms\Components\Select::make('processing_status')
                     ->options(ProcessingStatus::class)
                     ->required(),
+            ])->columns(2),
+
+            Forms\Components\Section::make('配送先')->schema([
+                Forms\Components\TextInput::make('shipping_name')
+                    ->label('お名前'),
+                Forms\Components\TextInput::make('postal_code')
+                    ->label('郵便番号'),
+                Forms\Components\TextInput::make('prefecture')
+                    ->label('都道府県'),
+                Forms\Components\TextInput::make('city')
+                    ->label('市区町村'),
+                Forms\Components\TextInput::make('address_line')
+                    ->label('番地・建物名')
+                    ->columnSpanFull(),
+                Forms\Components\TextInput::make('phone')
+                    ->label('電話番号'),
             ])->columns(2),
 
             Forms\Components\Section::make('ステータス管理')->schema([
@@ -134,6 +156,21 @@ class DogGoodsOrderResource extends Resource
 
                 Tables\Columns\ImageColumn::make('processed_image')
                     ->label('加工画像')
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                Tables\Columns\TextColumn::make('quantity')
+                    ->label('数量')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                Tables\Columns\TextColumn::make('shipping_name')
+                    ->label('宛名')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                Tables\Columns\TextColumn::make('postal_code')
+                    ->label('郵便番号')
+                    ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 Tables\Columns\TextColumn::make('ordered_at')

@@ -28,10 +28,10 @@
 <div class="section">
   <div class="section-title">Shipping ／ 配送先情報</div>
   @php
-      $postal = preg_replace('/^(\d{3})(\d{4})$/', '$1-$2', preg_replace('/[^0-9]/', '', $opts['postal_code'] ?? ''));
+      $postal = preg_replace('/^(\d{3})(\d{4})$/', '$1-$2', preg_replace('/[^0-9]/', '', $order->postal_code ?? ''));
   @endphp
-  <div class="info-row"><span class="info-label">お名前（宛名）</span><span class="info-value">{{ $opts['shipping_name'] ?? '—' }}</span></div>
-  <div class="info-row"><span class="info-label">電話番号</span><span class="info-value">{{ $opts['phone'] ?? '—' }}</span></div>
+  <div class="info-row"><span class="info-label">お名前（宛名）</span><span class="info-value">{{ $order->shipping_name ?? '—' }}</span></div>
+  <div class="info-row"><span class="info-label">電話番号</span><span class="info-value">{{ $order->phone ?? '—' }}</span></div>
   <div class="info-row"><span class="info-label">郵便番号</span><span class="info-value">〒{{ $postal }}</span></div>
-  <div class="info-row"><span class="info-label">住所</span><span class="info-value">{{ ($opts['prefecture'] ?? '') . ($opts['city'] ?? '') }}<br>{{ $opts['address_line'] ?? '' }}</span></div>
+  <div class="info-row"><span class="info-label">住所</span><span class="info-value">{{ ($order->prefecture ?? '') . ($order->city ?? '') }}<br>{{ $order->address_line ?? '' }}</span></div>
 </div>

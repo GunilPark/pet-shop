@@ -83,16 +83,26 @@ class GoodsOrderController extends Controller
             $uploadedImage = $final;
         }
 
-        // 相談・購入どちらも注文レコードを作成（決済は今後実装予定）
+        // 住所・数量は専用カラムに保存、custom_options には商品オプションのみ残す
+        $shippingKeys = ['quantity', 'shipping_name', 'postal_code', 'prefecture', 'city', 'address_line', 'phone'];
+        $customOptions = array_diff_key($data, array_flip($shippingKeys));
+
         $order = DogGoodsOrder::create([
             'user_id'           => auth()->id(),
             'dog_profile_id'    => ($data['dog_profile_id'] ?? '') !== '' ? $data['dog_profile_id'] : null,
             'item_id'           => $item->id,
+            'quantity'          => (int) ($data['quantity'] ?? 1),
+            'shipping_name'     => $data['shipping_name'] ?? null,
+            'postal_code'       => $data['postal_code'] ?? null,
+            'prefecture'        => $data['prefecture'] ?? null,
+            'city'              => $data['city'] ?? null,
+            'address_line'      => $data['address_line'] ?? null,
+            'phone'             => $data['phone'] ?? null,
             'order_status'      => OrderStatus::Pending,
             'processing_status' => $isConsultation ? ProcessingStatus::Reviewing : ProcessingStatus::Confirmed,
             'payment_status'    => PaymentStatus::Unsent,
             'uploaded_image'    => $uploadedImage,
-            'custom_options'    => $data,
+            'custom_options'    => $customOptions,
             'is_consultation'   => $isConsultation,
             'ordered_at'        => now(),
         ]);
