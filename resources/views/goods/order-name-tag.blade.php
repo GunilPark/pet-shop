@@ -15,66 +15,60 @@
             $url = asset('storage/' . $p);
             if (! $allImages->contains($url)) $allImages->push($url);
         }
+        $imgCount = $allImages->count();
     @endphp
 
-    <div x-data="{ current: 0, images: {{ $allImages->values()->toJson() }} }" class="mb-8">
-        {{-- メイン画像 --}}
-        <div class="relative rounded-[32px] overflow-hidden bg-slate-900 shadow-xl"
-             style="aspect-ratio: 4/3;">
-            <template x-if="images.length > 0">
-                <template x-for="(img, i) in images" :key="i">
-                    <img :src="img"
-                         x-show="current === i"
-                         class="absolute inset-0 w-full h-full object-cover transition-opacity duration-300">
-                </template>
-            </template>
-            <template x-if="images.length === 0">
+    <div x-data="{ current: 0 }" class="mb-8">
+        {{-- メイン画像エリア --}}
+        <div class="relative rounded-[32px] overflow-hidden bg-slate-900 shadow-xl" style="aspect-ratio: 4/3;">
+
+            @if($imgCount === 0)
                 <div class="absolute inset-0 flex items-center justify-center text-6xl">🏷️</div>
-            </template>
+            @else
+                @foreach($allImages as $i => $imgUrl)
+                    <img src="{{ $imgUrl }}"
+                         x-show="current === {{ $i }}"
+                         class="absolute inset-0 w-full h-full object-cover transition-opacity duration-300">
+                @endforeach
+            @endif
 
             {{-- 商品名オーバーレイ --}}
-            <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent px-6 py-5">
+            <div class="absolute bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-black/80 to-transparent px-6 py-5">
                 <p class="text-xs text-orange-400 font-bold uppercase tracking-widest mb-1">Name Tag</p>
                 <h2 class="text-xl font-black text-white">{{ $item->name }}</h2>
                 <p class="text-orange-400 font-black">¥{{ number_format($item->price) }}</p>
             </div>
 
-            {{-- 前後ボタン --}}
-            <template x-if="images.length > 1">
-                <div>
-                    <button type="button"
-                            @click="current = (current - 1 + images.length) % images.length"
-                            class="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/40 hover:bg-black/70 text-white rounded-full font-bold text-xl transition">‹</button>
-                    <button type="button"
-                            @click="current = (current + 1) % images.length"
-                            class="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/40 hover:bg-black/70 text-white rounded-full font-bold text-xl transition">›</button>
-                </div>
-            </template>
-
-            {{-- ドットインジケーター --}}
-            <template x-if="images.length > 1">
-                <div class="absolute top-3 right-3 flex gap-1.5">
-                    <template x-for="(img, i) in images" :key="i">
-                        <button type="button" @click="current = i"
-                                :class="current === i ? 'bg-orange-400 w-4' : 'bg-white/50 w-2'"
+            {{-- 前後ボタン・ドット --}}
+            @if($imgCount > 1)
+                <button type="button"
+                        @click="current = (current - 1 + {{ $imgCount }}) % {{ $imgCount }}"
+                        class="absolute left-3 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-black/40 hover:bg-black/70 text-white rounded-full font-bold text-xl transition">‹</button>
+                <button type="button"
+                        @click="current = (current + 1) % {{ $imgCount }}"
+                        class="absolute right-3 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-black/40 hover:bg-black/70 text-white rounded-full font-bold text-xl transition">›</button>
+                <div class="absolute top-3 left-1/2 -translate-x-1/2 z-10 flex gap-1.5">
+                    @foreach($allImages as $i => $imgUrl)
+                        <button type="button" @click="current = {{ $i }}"
+                                :class="current === {{ $i }} ? 'bg-orange-400 w-4' : 'bg-white/50 w-2'"
                                 class="h-2 rounded-full transition-all duration-300"></button>
-                    </template>
+                    @endforeach
                 </div>
-            </template>
+            @endif
         </div>
 
         {{-- サムネイル列 --}}
-        <template x-if="images.length > 1">
+        @if($imgCount > 1)
             <div class="flex gap-2 mt-3 overflow-x-auto pb-1">
-                <template x-for="(img, i) in images" :key="i">
-                    <button type="button" @click="current = i"
-                            :class="current === i ? 'ring-2 ring-orange-500 opacity-100' : 'ring-1 ring-slate-200 opacity-50'"
+                @foreach($allImages as $i => $imgUrl)
+                    <button type="button" @click="current = {{ $i }}"
+                            :class="current === {{ $i }} ? 'ring-2 ring-orange-500 opacity-100' : 'ring-1 ring-slate-200 opacity-50'"
                             class="flex-shrink-0 w-14 h-14 rounded-xl overflow-hidden transition-all">
-                        <img :src="img" class="w-full h-full object-cover">
+                        <img src="{{ $imgUrl }}" class="w-full h-full object-cover">
                     </button>
-                </template>
+                @endforeach
             </div>
-        </template>
+        @endif
     </div>
 
     <div class="bg-white rounded-[32px] border border-slate-100 shadow-sm p-8">
