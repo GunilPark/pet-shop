@@ -88,7 +88,7 @@ class GoodsOrderController extends Controller
             'dog_profile_id'    => ($data['dog_profile_id'] ?? '') !== '' ? $data['dog_profile_id'] : null,
             'item_id'           => $item->id,
             'order_status'      => OrderStatus::Pending,
-            'processing_status' => ProcessingStatus::Pending,
+            'processing_status' => $isConsultation ? ProcessingStatus::Reviewing : ProcessingStatus::Confirmed,
             'uploaded_image'    => $uploadedImage,
             'custom_options'    => $data,
             'is_consultation'   => $isConsultation,

@@ -201,7 +201,28 @@ class DogGoodsOrderResource extends Resource
                             ->send();
                     }),
 
-                // ③ 決済メール送信（相談注文のみ・支払済以外）
+                // ③ 発送済みにする（加工中のみ表示）
+                Tables\Actions\Action::make('markShipped')
+                    ->label('発送済みにする')
+                    ->icon('heroicon-o-truck')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->modalHeading('発送済みに変更しますか？')
+                    ->modalDescription('ステータスを「発送中」に変更します。お客様のマイページに反映されます。')
+                    ->visible(fn (DogGoodsOrder $r) => in_array($r->processing_status, [ProcessingStatus::Confirmed, ProcessingStatus::Processing]))
+                    ->action(function (DogGoodsOrder $record) {
+                        $record->update([
+                            'processing_status' => ProcessingStatus::Shipping,
+                            'order_status'      => OrderStatus::Shipping,
+                        ]);
+
+                        Notification::make()
+                            ->title('配送中に更新しました')
+                            ->success()
+                            ->send();
+                    }),
+
+                // ④ 決済メール送信（相談注文のみ・支払済以外）
                 Tables\Actions\Action::make('sendPayment')
                     ->label('決済メール送信')
                     ->icon('heroicon-o-credit-card')
