@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\OrderStatus;
 use App\Enums\ProcessingStatus;
 use App\Enums\ProductType;
+use App\Mail\ConsultationMail;
 use App\Models\DogGoodsItem;
 use App\Models\DogGoodsOrder;
 use Illuminate\Http\Request;
@@ -79,7 +80,7 @@ class GoodsOrderController extends Controller
         }
 
         // 相談・購入どちらも注文レコードを作成（決済は今後実装予定）
-        DogGoodsOrder::create([
+        $order = DogGoodsOrder::create([
             'user_id'           => auth()->id(),
             'dog_profile_id'    => ($data['dog_profile_id'] ?? '') !== '' ? $data['dog_profile_id'] : null,
             'item_id'           => $item->id,
@@ -94,6 +95,7 @@ class GoodsOrderController extends Controller
         $request->session()->forget('order_preview');
 
         if ($isConsultation) {
+            $this->sendConsultationMail($order, $item);
             return redirect()->route('mypage')->with('success', 'ご相談を受け付けました！注文も登録されました。担当者よりご連絡いたします。');
         }
 
@@ -276,13 +278,7 @@ class GoodsOrderController extends Controller
     {
         $adminEmail = config('mail.from.address', 'admin@example.com');
 
-        \Illuminate\Support\Facades\Mail::raw(
-            "【相談申請】注文ID: {$order->id}\n商品: {$item->name}\nユーザーID: {$order->user_id}\n\nオプション内容:\n" .
-            json_encode($order->custom_options, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT),
-            function ($msg) use ($adminEmail, $order) {
-                $msg->to($adminEmail)
-                    ->subject("【相談申請】注文#{$order->id} — " . auth()->user()->name);
-            }
-        );
+        \Illuminate\Support\Facades\Mail::to($adminEmail)
+            ->send(new ConsultationMail($order, $item));
     }
 }
